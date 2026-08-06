@@ -36,33 +36,84 @@ DARK = "#2E2A24"
 
 st.markdown(f"""
 <style>
-    .stApp {{ background-color: {CREAM}; }}
-    section[data-testid="stSidebar"] {{ background-color: #EFE7D8; border-right: 1px solid #DDD0B8; }}
-    h1, h2, h3 {{ color: {DARK}; font-family: 'Georgia', serif; }}
+    /* Fuerza tema claro sin importar el modo del sistema/navegador */
+    html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {{
+        background-color: {CREAM} !important;
+        color: {DARK} !important;
+    }}
+
+    /* Texto general: párrafos, labels, captions, listas, spans */
+    p, span, label, li, div, small,
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stCaptionContainer"], [data-testid="stCaption"],
+    [data-testid="stWidgetLabel"] p {{
+        color: {DARK} !important;
+    }}
+
+    h1, h2, h3, h4, h5, h6,
+    [data-testid="stMarkdownContainer"] h1,
+    [data-testid="stMarkdownContainer"] h2,
+    [data-testid="stMarkdownContainer"] h3 {{
+        color: {DARK} !important;
+        font-family: 'Georgia', serif;
+    }}
+
+    /* Sidebar: fondo claro y texto oscuro, forzado */
+    section[data-testid="stSidebar"],
+    [data-testid="stSidebarContent"] {{
+        background-color: #EFE7D8 !important;
+        border-right: 1px solid #DDD0B8;
+    }}
+    section[data-testid="stSidebar"] * {{
+        color: {DARK} !important;
+    }}
+
+    /* Métricas (KPIs) */
     div[data-testid="stMetric"] {{
-        background-color: white;
+        background-color: white !important;
         border: 1px solid #E4D8C0;
         border-left: 5px solid {ACCENT};
         border-radius: 8px;
         padding: 10px 16px;
     }}
-    div[data-testid="stMetricLabel"] {{ color: {DARK}; font-weight: 600; }}
+    div[data-testid="stMetric"] * {{ color: {DARK} !important; }}
+    div[data-testid="stMetricValue"] {{ color: {PRIMARY} !important; font-weight: 700; }}
+
+    /* Inputs: selects, multiselect, date input, number input, sliders */
+    [data-baseweb="select"] > div, [data-baseweb="input"] > div,
+    input, textarea {{
+        background-color: white !important;
+        color: {DARK} !important;
+    }}
+    [data-baseweb="tag"] {{ color: white !important; }}
+
+    /* Pestañas (tabs) */
     .stTabs [data-baseweb="tab-list"] {{ gap: 4px; }}
     .stTabs [data-baseweb="tab"] {{
-        background-color: #EFE7D8;
+        background-color: #EFE7D8 !important;
         border-radius: 6px 6px 0 0;
         padding: 8px 16px;
     }}
+    .stTabs [data-baseweb="tab"] p {{ color: {DARK} !important; }}
     .stTabs [aria-selected="true"] {{
         background-color: {ACCENT} !important;
-        color: white !important;
     }}
+    .stTabs [aria-selected="true"] p {{ color: white !important; }}
+
+    /* Banner superior */
     .banner {{
         background: linear-gradient(90deg, {PRIMARY}, {ACCENT});
-        color: white; padding: 22px 28px; border-radius: 10px; margin-bottom: 18px;
+        padding: 22px 28px; border-radius: 10px; margin-bottom: 18px;
     }}
-    .banner h1 {{ color: white; margin: 0; font-size: 30px; }}
-    .banner p {{ color: #F6EDE0; margin: 4px 0 0 0; font-size: 15px; }}
+    .banner h1, .banner p {{ color: white !important; }}
+    .banner h1 {{ margin: 0; font-size: 30px; }}
+    .banner p {{ margin: 4px 0 0 0; font-size: 15px; }}
+
+    /* Tablas / dataframes */
+    [data-testid="stDataFrame"] {{ background-color: white !important; }}
+
+    /* Alertas informativas (st.info) legibles sobre fondo claro */
+    div[data-testid="stAlert"] p {{ color: {DARK} !important; }}
 </style>
 """, unsafe_allow_html=True)
 
