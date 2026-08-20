@@ -496,39 +496,132 @@ if selected_tab == "Resumen":
         st.plotly_chart(fig3, use_container_width=True)
 
 # ---------------------------------------------------------
-# TAB 2: EXPLORACIÓN
+# TAB 2: EXPLORACIÓN (TODOS LOS GRÁFICOS INTERACTIVOS PRIMERO)
 # ---------------------------------------------------------
 elif selected_tab == "Exploración":
-    st.markdown("### Distribución general de precios")
-    fig = px.histogram(df, x="$Final", nbins=40)
-    promedio = df["$Final"].mean()
-    fig.add_vline(x=promedio, line_dash="dash", line_color="#E11D48",
-                  annotation_text=f"Promedio: ${promedio:,.0f}")
-    fig.update_layout(xaxis_title="Precio Final ($/Kg)", yaxis_title="Frecuencia")
-    fig = aplicar_estilo_grafico(fig)
-    st.plotly_chart(fig, use_container_width=True)
+    st.markdown("### 📈 Visualización Exploratoria Comercial y Operativa")
+    st.caption("Análisis gráfico interactivo sobre la estructura de precios, franjas horarias, orígenes y dinámica de puja.")
 
-    col1, col2 = st.columns(2)
+    # Subconjunto Top 5 categorías
     top5 = df["Sexo"].value_counts().head(5).index
     df_top5 = df[df["Sexo"].isin(top5)].copy()
     df_top5["Etiqueta"] = df_top5["Sexo"].map(etiqueta_sexo)
 
-    with col1:
-        st.markdown("### Peso vs. Precio (Top 5 categorías)")
-        fig2 = px.scatter(df_top5, x="P.Prom", y="$Final", color="Etiqueta",
-                          opacity=0.6, trendline="ols",
-                          labels={"P.Prom": "Peso Promedio (Kg)", "$Final": "Precio Final ($/Kg)"})
-        fig2 = aplicar_estilo_grafico(fig2)
-        st.plotly_chart(fig2, use_container_width=True)
+    # 1. BLOQUE DE GRÁFICOS: RELACIONES DE PRECIO Y LOTE
+    col_g1, col_g2 = st.columns(2)
 
-    with col2:
-        st.markdown("### Rango de precios por categoría (Top 5)")
-        orden = df_top5.groupby("Etiqueta")["$Final"].median().sort_values(ascending=False).index
-        fig3 = px.box(df_top5, x="Etiqueta", y="$Final", color="Etiqueta",
-                      category_orders={"Etiqueta": list(orden)})
-        fig3.update_layout(showlegend=False, xaxis_title="Categoría", yaxis_title="Precio Final ($/Kg)")
-        fig3 = aplicar_estilo_grafico(fig3)
-        st.plotly_chart(fig3, use_container_width=True)
+    with col_g1:
+        st.markdown("#### ⚖️ Peso vs. Precio Final por Categoría (Top 5)")
+        fig_scatter = px.scatter(
+            df_top5, 
+            x="P.Prom", 
+            y="$Final", 
+            color="Etiqueta",
+            opacity=0.6, 
+            trendline="ols",
+            labels={"P.Prom": "Peso Promedio (Kg)", "$Final": "Precio Final ($/Kg)"}
+        )
+        fig_scatter = aplicar_estilo_grafico(fig_scatter)
+        st.plotly_chart(fig_scatter, use_container_width=True)
+
+    with col_g2:
+        st.markdown("#### 📦 Rango de Precios por Categoría (Boxplot Top 5)")
+        orden_cat = df_top5.groupby("Etiqueta")["$Final"].median().sort_values(ascending=False).index
+        fig_box = px.box(
+            df_top5, 
+            x="Etiqueta", 
+            y="$Final", 
+            color="Etiqueta",
+            category_orders={"Etiqueta": list(orden_cat)}
+        )
+        fig_box.update_layout(showlegend=False, xaxis_title="Categoría", yaxis_title="Precio Final ($/Kg)")
+        fig_box = aplicar_estilo_grafico(fig_box)
+        st.plotly_chart(fig_box, use_container_width=True)
+
+    # 2. BLOQUE DE GRÁFICOS: OPERATIVO Y GEOGRÁFICO
+    col_g3, col_g4 = st.columns(2)
+
+    with col_g3:
+        st.markdown("#### ⏰ Precio Promedio por Hora de Entrada")
+        precio_hora = df.groupby("Hora_Entrada")["$Final"].mean().reset_index()
+        fig_hora = px.bar(
+            precio_hora, 
+            x="Hora_Entrada", 
+            y="$Final",
+            text_auto=".0f",
+            labels={"Hora_Entrada": "Hora de Entrada", "$Final": "Precio Promedio ($/Kg)"},
+            color="$Final",
+            color_continuous_scale=["#93C5FD", "#003399"]
+        )
+        fig_hora.update_layout(coloraxis_showscale=False)
+        fig_hora = aplicar_estilo_grafico(fig_hora)
+        st.plotly_chart(fig_hora, use_container_width=True)
+
+    with col_g4:
+        st.markdown("#### 🗺️ Origen del Ganado (Treemap de Procedencias)")
+        proc_tree = df.groupby("Procedencia").agg(
+            Lotes=("Cant.", "count"),
+            Precio_Prom=("$Final", "mean")
+        ).reset_index()
+        
+        fig_tree = px.treemap(
+            proc_tree, 
+            path=["Procedencia"], 
+            values="Lotes",
+            color="Precio_Prom",
+            color_continuous_scale="Greens",
+            labels={"Precio_Prom": "Precio Prom. ($/Kg)", "Lotes": "Total Lotes"}
+        )
+        fig_tree = aplicar_estilo_grafico(fig_tree)
+        st.plotly_chart(fig_tree, use_container_width=True)
+
+    # 3. BLOQUE DE GRÁFICOS: COMPETITIVIDAD Y TAMAÑO DE LOTE
+    col_g5, col_g6 = st.columns(2)
+
+    with col_g5:
+        st.markdown("#### 🎻 Distribución del Margen de Puja ($Final - $Base)")
+        fig_violin = px.violin(
+            df_top5, 
+            y="Margen_Puja", 
+            x="Etiqueta", 
+            color="Etiqueta",
+            box=True, 
+            points=False,
+            labels={"Margen_Puja": "Margen de Puja ($)", "Etiqueta": "Categoría"}
+        )
+        fig_violin.update_layout(showlegend=False)
+        fig_violin = aplicar_estilo_grafico(fig_violin)
+        st.plotly_chart(fig_violin, use_container_width=True)
+
+    with col_g6:
+        st.markdown("#### 🫧 Cabezas por Lote vs. Precio Final")
+        fig_bubble = px.scatter(
+            df_top5, 
+            x="Cant.", 
+            y="$Final", 
+            size="P.Prom", 
+            color="Etiqueta",
+            hover_data=["Procedencia"],
+            labels={"Cant.": "Animales en Lote", "$Final": "Precio Final ($/Kg)", "P.Prom": "Peso Prom. (Kg)"}
+        )
+        fig_bubble = aplicar_estilo_grafico(fig_bubble)
+        st.plotly_chart(fig_bubble, use_container_width=True)
+
+    # 4. HISTOGRAMA GENERAL AL FINAL
+    st.markdown("---")
+    st.markdown("### 📊 Histograma de Distribución General de Precios")
+
+    fig_hist = px.histogram(df, x="$Final", nbins=40)
+    promedio = df["$Final"].mean()
+    fig_hist.add_vline(
+        x=promedio, 
+        line_dash="dash", 
+        line_color="#E11D48",
+        annotation_text=f"Promedio: ${promedio:,.0f}"
+    )
+    fig_hist.update_layout(xaxis_title="Precio Final ($/Kg)", yaxis_title="Frecuencia (Lotes)")
+    fig_hist = aplicar_estilo_grafico(fig_hist)
+    st.plotly_chart(fig_hist, use_container_width=True)
 
 # ---------------------------------------------------------
 # TAB 3: CORRELACIÓN
@@ -681,13 +774,12 @@ elif selected_tab == "Pronóstico":
         st.plotly_chart(fig, use_container_width=True)
 
 # ---------------------------------------------------------
-# TAB 6: PROBABILIDAD DE PUJA (DINÁMICO & INTERACTIVO EN TIEMPO REAL)
+# TAB 6: PROBABILIDAD DE PUJA
 # ---------------------------------------------------------
 elif selected_tab == "Prob. Puja":
     st.markdown("### 🎯 Simulador Interactivo y Clasificador de Probabilidad de Puja")
     st.caption("Ajusta los parámetros del modelo o los datos del lote para ver la actualización de probabilidades en tiempo real.")
 
-    # --- CONTROLES INTERACTIVOS DEL MODELO ---
     col_ctrl1, col_ctrl2, col_ctrl3 = st.columns(3)
     with col_ctrl1:
         max_depth_sel = st.slider("Profundidad máxima del Árbol", min_value=1, max_value=8, value=3, step=1, key="tree_depth")
@@ -696,17 +788,13 @@ elif selected_tab == "Prob. Puja":
     with col_ctrl3:
         min_samples_sel = st.slider("Mínimo de muestras por nodo", min_value=2, max_value=50, value=10, step=2, key="tree_samples")
 
-    # Preparación de Datos limpia y consistente
     cols_base = ["Cant.", "P.Prom", "$Base", "Procedencia", "Hubo_Puja"]
     df_tree = df[cols_base].dropna().copy()
-
-    # Preprocesamiento One-Hot Encoding
     df_tree_encoded = pd.get_dummies(df_tree, columns=["Procedencia"], drop_first=True)
 
     X_tree = df_tree_encoded.drop(columns=["Hubo_Puja"])
     y_tree = df_tree_encoded["Hubo_Puja"]
 
-    # Entrenamiento dinámico del Árbol
     X_tr_t, X_te_t, y_tr_t, y_te_t = train_test_split(X_tree, y_tree, test_size=0.2, random_state=42)
     modelo_arbol = DecisionTreeClassifier(
         max_depth=max_depth_sel,
@@ -720,8 +808,6 @@ elif selected_tab == "Prob. Puja":
     st.info(f"💡 **Precisión (Accuracy) del Modelo:** {acc_score:.1f}% | Evaluado sobre {len(X_te_t)} lotes de prueba.")
 
     st.markdown("---")
-
-    # --- CONTROLES INTERACTIVOS DEL LOTE A SIMULAR ---
     st.markdown("#### 🧪 Simulador de Lote Específico")
     col_sim1, col_sim2, col_sim3, col_sim4 = st.columns(4)
 
@@ -736,7 +822,6 @@ elif selected_tab == "Prob. Puja":
     with col_sim4:
         proc_sim = st.selectbox("Procedencia", options=procedencias_unicas, key="sim_proc")
 
-    # Vectorización dinámica exacta respetando las columnas de entrenamiento
     input_data = pd.DataFrame(0, index=[0], columns=X_tree.columns)
     input_data.loc[0, "Cant."] = cant_sim
     input_data.loc[0, "P.Prom"] = peso_sim
@@ -746,13 +831,11 @@ elif selected_tab == "Prob. Puja":
     if col_proc_match in input_data.columns:
         input_data.loc[0, col_proc_match] = 1
 
-    # Cálculo inmediato de Probabilidades
     probs = modelo_arbol.predict_proba(input_data)[0]
     clases = list(modelo_arbol.classes_)
     idx_puja = clases.index(1) if 1 in clases else 1
     prob_con_puja = probs[idx_puja] * 100
 
-    # Gráficos dinámicos
     col_g1, col_g2 = st.columns([1, 1])
 
     with col_g1:
@@ -786,7 +869,6 @@ elif selected_tab == "Prob. Puja":
             "Importancia": modelo_arbol.feature_importances_
         }).sort_values("Importancia", ascending=True).tail(8)
 
-        # Mapear nombres legibles
         importancias["Variable"] = importancias["Variable"].str.replace("Procedencia_", "Proc: ")
 
         fig_imp = px.bar(
@@ -803,7 +885,7 @@ elif selected_tab == "Prob. Puja":
         st.plotly_chart(fig_imp, use_container_width=True, key="imp_plot")
 
 # ---------------------------------------------------------
-# TAB 7: COMPRADORES (CLUSTERING)
+# TAB 7: COMPRADORES (CLUSTERING & DESCRIPCIÓN)
 # ---------------------------------------------------------
 elif selected_tab == "Compradores":
     st.markdown("### Segmentación por comportamiento de compra (K-Means)")
@@ -815,14 +897,12 @@ elif selected_tab == "Compradores":
     d = df[cols].copy().dropna()
     d["Margen_Puja"] = d["$Final"] - d["$Base"]
     
-    # Modelo K-Means
     X = d[["P.Prom", "$Final", "Margen_Puja"]]
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
     modelo = KMeans(n_clusters=k_sel, random_state=10, n_init=10).fit(X_scaled)
     d["Perfil_ID"] = modelo.labels_
 
-    # Gráfico Scatter Plot
     fig = px.scatter(
         d, 
         x="P.Prom", 
@@ -837,7 +917,6 @@ elif selected_tab == "Compradores":
     st.markdown("---")
     st.markdown("### 📋 Caracterización y Perfilamiento de Compradores")
 
-    # Resumen estadístico por perfil
     resumen_clusters = d.groupby("Perfil_ID").agg(
         Lotes_Comprados=("P.Prom", "count"),
         Peso_Promedio=("P.Prom", "mean"),
@@ -845,7 +924,6 @@ elif selected_tab == "Compradores":
         Margen_Puja_Promedio=("Margen_Puja", "mean")
     ).reset_index()
 
-    # Mostrar Tarjetas Descriptivas para cada Perfil
     cols_perfiles = st.columns(min(k_sel, 3))
     
     for idx, row in resumen_clusters.iterrows():
@@ -857,7 +935,6 @@ elif selected_tab == "Compradores":
             margen = row["Margen_Puja_Promedio"]
             lotes = int(row["Lotes_Comprados"])
 
-            # Etiquetado automático del perfil según características
             if peso > 350:
                 tag_perfil = "🐄 Compradores de Ceba / Pesados"
             elif precio > d["$Final"].quantile(0.66):
@@ -878,7 +955,6 @@ elif selected_tab == "Compradores":
             </div>
             """, unsafe_allow_html=True)
 
-    # Tabla global comparativa
     with st.expander("📊 Ver Tabla Detallada de Métricas por Perfil"):
         st.dataframe(
             resumen_clusters.style.format({
