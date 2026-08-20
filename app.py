@@ -29,11 +29,11 @@ st.set_page_config(
 )
 
 # =========================================================
-# ESTILOS CSS (CORREGIDO TIPOGRAFÍA E ÍCONOS)
+# ESTILOS CSS CORREGIDOS (LOGOS EN HTML/CSS LIMPIO)
 # =========================================================
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap');
 
     /* Fondo general */
     html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stMain"] {
@@ -42,16 +42,54 @@ st.markdown("""
         font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
     }
 
-    /* Arreglo para que el botón de colapso de la barra lateral no renderice texto plano */
-    [data-testid="stSidebarCollapseButton"] * {
-        font-family: 'Material Symbols Outlined', 'Material Icons' !important;
+    /* Solución definitiva para íconos nativos de Streamlit */
+    [data-testid="stSidebarCollapseButton"] button span,
+    [data-testid="stSidebarCollapseButton"] span {
+        font-family: "Source Sans Pro", sans-serif, "Material Icons" !important;
     }
 
-    h1, h2, h3, h4, h5, h6, p, span, label, input, button {
-        font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+    /* LOGO SIDEBAR HTML */
+    .sidebar-brand {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+        padding: 8px 0;
+    }
+    .brand-suganorte {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 900;
+        font-size: 1.65rem;
+        color: #0B2265;
+        letter-spacing: -0.8px;
+        line-height: 1;
+    }
+    .brand-sa {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 800;
+        font-size: 1.1rem;
+        color: #0B2265;
+        position: relative;
+    }
+    .brand-sa::after {
+        content: "🔨";
+        font-size: 0.85rem;
+        position: absolute;
+        top: -6px;
+        right: -14px;
+        transform: rotate(20deg);
+    }
+    .brand-stripe {
+        height: 4px;
+        width: 100%;
+        max-width: 180px;
+        background: linear-gradient(90deg, #FFD100 0% 40%, #008037 40% 75%, #E11D48 75% 100%);
+        border-radius: 2px;
+        margin-top: 4px;
+        margin-bottom: 12px;
     }
 
-    /* BANNER INSTITUCIONAL */
+    /* BANNER HEADER HTML */
     .suganorte-header-container {
         background: #0B2265;
         border-radius: 12px;
@@ -84,6 +122,33 @@ st.markdown("""
         margin-bottom: 0 !important;
         font-size: 0.95rem !important;
         font-weight: 600 !important;
+    }
+    .banner-brand {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .banner-suganorte {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: #FFFFFF;
+        letter-spacing: -0.8px;
+    }
+    .banner-sa {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 800;
+        font-size: 1.2rem;
+        color: #FFFFFF;
+        position: relative;
+    }
+    .banner-sa::after {
+        content: "🔨";
+        font-size: 0.9rem;
+        position: absolute;
+        top: -6px;
+        right: -14px;
+        transform: rotate(20deg);
     }
 
     /* BARRA LATERAL */
@@ -198,19 +263,12 @@ def etiqueta_sexo(codigo: str) -> str:
 # SIDEBAR
 # =========================================================
 st.sidebar.markdown("""
-<div style="padding: 10px 0; text-align: center;">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 70" width="100%" style="max-width: 260px;">
-      <path d="M 10,35 Q 25,5 40,35 T 70,35" fill="none" stroke="#008037" stroke-width="6" stroke-linecap="round"/>
-      <text x="10" y="48" font-family="'Inter', sans-serif" font-weight="900" font-size="32" fill="#0B2265" letter-spacing="-1">Suganorte</text>
-      <text x="215" y="48" font-family="'Inter', sans-serif" font-weight="800" font-size="22" fill="#0B2265">S.A.</text>
-      <rect x="10" y="58" width="50" height="4" fill="#FFD100"/>
-      <rect x="60" y="58" width="50" height="4" fill="#008037"/>
-      <rect x="110" y="58" width="25" height="4" fill="#E11D48"/>
-      <g transform="translate(265, 12) rotate(25)">
-        <rect x="0" y="0" width="7" height="24" rx="2" fill="#0B2265"/>
-        <rect x="-5" y="-6" width="17" height="10" rx="2" fill="#0B2265"/>
-      </g>
-    </svg>
+<div>
+    <div class="sidebar-brand">
+        <span class="brand-suganorte">Suganorte</span>
+        <span class="brand-sa">S.A.</span>
+    </div>
+    <div class="brand-stripe"></div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -265,16 +323,9 @@ st.markdown("""
             <h1 class="suganorte-title">Plataforma de Analítica Predictiva</h1>
             <p class="suganorte-subtitle">Subasta Ganadera Suganorte S.A. · Histórico & Pronósticos</p>
         </div>
-        <div style="width: 240px; flex-shrink: 0;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 60" width="100%">
-              <path d="M 10,30 Q 25,5 40,30 T 70,30" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
-              <text x="10" y="42" font-family="'Inter', sans-serif" font-weight="900" font-size="30" fill="#FFFFFF" letter-spacing="-1">Suganorte</text>
-              <text x="205" y="42" font-family="'Inter', sans-serif" font-weight="800" font-size="22" fill="#FFFFFF">S.A.</text>
-              <g transform="translate(255, 10) rotate(25)">
-                <rect x="0" y="0" width="7" height="22" rx="2" fill="#FFFFFF"/>
-                <rect x="-5" y="-5" width="17" height="9" rx="2" fill="#FFFFFF"/>
-              </g>
-            </svg>
+        <div class="banner-brand">
+            <span class="banner-suganorte">Suganorte</span>
+            <span class="banner-sa">S.A.</span>
         </div>
     </div>
 </div>
