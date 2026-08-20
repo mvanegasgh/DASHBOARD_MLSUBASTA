@@ -9,6 +9,7 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
+from streamlit_option_menu import option_menu
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
@@ -19,7 +20,7 @@ from statsmodels.tsa.holtwinters import ExponentialSmoothing
 import matplotlib.pyplot as plt
 
 # =========================================================
-# CONFIGURACIÓN DE PÁGINA Y ESTILO
+# CONFIGURACIÓN DE PÁGINA
 # =========================================================
 st.set_page_config(
     page_title="Suganorte | Analítica de Subasta Ganadera",
@@ -27,107 +28,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
-
-PRIMARY = "#7A3B24"      # cuero / tierra
-ACCENT = "#C97A3D"       # terracota ganadero
-GREEN = "#4B6E3A"        # pasto
-CREAM = "#F6F1E7"        # papel
-DARK = "#2E2A24"
-
-st.markdown(f"""
-<style>
-    /* Fuerza tema claro sin importar el modo del sistema/navegador */
-    html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {{
-        background-color: {CREAM} !important;
-        color: {DARK} !important;
-    }}
-
-    /* Texto general: párrafos, labels, captions, listas, spans */
-    p, span, label, li, div, small,
-    [data-testid="stMarkdownContainer"] p,
-    [data-testid="stCaptionContainer"], [data-testid="stCaption"],
-    [data-testid="stWidgetLabel"] p {{
-        color: {DARK} !important;
-    }}
-
-    h1, h2, h3, h4, h5, h6,
-    [data-testid="stMarkdownContainer"] h1,
-    [data-testid="stMarkdownContainer"] h2,
-    [data-testid="stMarkdownContainer"] h3 {{
-        color: {DARK} !important;
-        font-family: 'Georgia', serif;
-    }}
-
-    /* Sidebar: fondo claro y texto oscuro, forzado */
-    section[data-testid="stSidebar"],
-    [data-testid="stSidebarContent"] {{
-        background-color: #EFE7D8 !important;
-        border-right: 1px solid #DDD0B8;
-    }}
-    section[data-testid="stSidebar"] * {{
-        color: {DARK} !important;
-    }}
-
-    /* Métricas (KPIs) */
-    div[data-testid="stMetric"] {{
-        background-color: white !important;
-        border: 1px solid #E4D8C0;
-        border-left: 5px solid {ACCENT};
-        border-radius: 8px;
-        padding: 10px 16px;
-    }}
-    div[data-testid="stMetric"] * {{ color: {DARK} !important; }}
-    div[data-testid="stMetricValue"] {{ color: {PRIMARY} !important; font-weight: 700; }}
-
-    /* Inputs: selects, multiselect, date input, number input, sliders */
-    [data-baseweb="select"] > div, [data-baseweb="input"] > div,
-    input, textarea {{
-        background-color: white !important;
-        color: {DARK} !important;
-    }}
-    [data-baseweb="tag"] {{ color: white !important; }}
-
-    /* Pestañas (tabs) */
-    .stTabs [data-baseweb="tab-list"] {{ gap: 4px; }}
-    .stTabs [data-baseweb="tab"] {{
-        background-color: #EFE7D8 !important;
-        border-radius: 6px 6px 0 0;
-        padding: 8px 16px;
-    }}
-    .stTabs [data-baseweb="tab"] p {{ color: {DARK} !important; }}
-    .stTabs [aria-selected="true"] {{
-        background-color: {ACCENT} !important;
-    }}
-    .stTabs [aria-selected="true"] p {{ color: white !important; }}
-
-    /* Banner superior */
-    .banner {{
-        background: linear-gradient(90deg, {PRIMARY}, {ACCENT});
-        padding: 22px 28px; border-radius: 10px; margin-bottom: 18px;
-    }}
-    .banner h1, .banner p {{ color: white !important; }}
-    .banner h1 {{ margin: 0; font-size: 30px; }}
-    .banner p {{ margin: 4px 0 0 0; font-size: 15px; }}
-
-    /* Tablas / dataframes */
-    [data-testid="stDataFrame"] {{ background-color: white !important; }}
-
-    /* Alertas informativas (st.info) legibles sobre fondo claro */
-    div[data-testid="stAlert"] p {{ color: {DARK} !important; }}
-</style>
-""", unsafe_allow_html=True)
-
-SEXO_LABELS = {
-    "HL": "Hembra de Levante", "ML": "Macho de Levante", "VH": "Vaca Horra",
-    "HV": "Hembra de Vientre", "TR": "Ternero(a)", "MC": "Macho de Ceba",
-    "VI": "Vaca Industrial", "VP": "Vaca Parida", "TO": "Toro",
-    "BF": "Búfala", "BH": "Búfalo", "TI": "Toro/Otro",
-}
-
-
-def etiqueta_sexo(codigo: str) -> str:
-    return f"{codigo} · {SEXO_LABELS.get(codigo, codigo)}"
-
 
 # =========================================================
 # CARGA Y LIMPIEZA DE DATOS
@@ -145,14 +45,96 @@ def cargar_datos(path="data.csv"):
     df = df.dropna(subset=["Fecha_TS"])
     return df
 
-
 df_total = cargar_datos("data.csv")
 
+SEXO_LABELS = {
+    "HL": "Hembra de Levante", "ML": "Macho de Levante", "VH": "Vaca Horra",
+    "HV": "Hembra de Vientre", "TR": "Ternero(a)", "MC": "Macho de Ceba",
+    "VI": "Vaca Industrial", "VP": "Vaca Parida", "TO": "Toro",
+    "BF": "Búfala", "BH": "Búfalo", "TI": "Toro/Otro",
+}
+
+def etiqueta_sexo(codigo: str) -> str:
+    return f"{codigo} · {SEXO_LABELS.get(codigo, codigo)}"
+
 # =========================================================
-# SIDEBAR - FILTROS GLOBALES
+# SIDEBAR - TEMAS Y FILTROS GLOBALES
 # =========================================================
 st.sidebar.title("🐂 Suganorte")
 st.sidebar.caption("Analítica Predictiva de Subasta Ganadera — Zarzal, Valle")
+st.sidebar.markdown("---")
+
+st.sidebar.subheader("🎨 Apariencia")
+tema_sel = st.sidebar.selectbox(
+    "Tema visual",
+    ["Ganadero / Tierra", "Oscuro Profesional", "Claro Minimalista", "Cyberpunk / Neón"]
+)
+
+PALETAS = {
+    "Ganadero / Tierra": {
+        "bg": "#F6F1E7", "sidebar": "#EFE7D8", "primary": "#7A3B24", "accent": "#C97A3D",
+        "card": "#FFFFFF", "text": "#2E2A24", "colors": ["#7A3B24", "#C97A3D", "#4B6E3A", "#D9A05B"]
+    },
+    "Oscuro Profesional": {
+        "bg": "#0E1117", "sidebar": "#161B22", "primary": "#00ADB5", "accent": "#00ADB5",
+        "card": "#222831", "text": "#EEEEEE", "colors": ["#00ADB5", "#FF5722", "#FFC107", "#00E676"]
+    },
+    "Claro Minimalista": {
+        "bg": "#F8F9FA", "sidebar": "#E9ECEF", "primary": "#1A73E8", "accent": "#4285F4",
+        "card": "#FFFFFF", "text": "#202124", "colors": ["#1A73E8", "#34A853", "#FBBC05", "#EA4335"]
+    },
+    "Cyberpunk / Neón": {
+        "bg": "#0D0221", "sidebar": "#0F0826", "primary": "#FF007F", "accent": "#00F5D4",
+        "card": "#190938", "text": "#00F5D4", "colors": ["#FF007F", "#00F5D4", "#7B2CBF", "#F15BB5"]
+    }
+}
+
+theme = PALETAS[tema_sel]
+
+st.markdown(f"""
+<style>
+    html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {{
+        background-color: {theme['bg']} !important;
+        color: {theme['text']} !important;
+    }}
+    p, span, label, li, div, small, [data-testid="stMarkdownContainer"] p {{
+        color: {theme['text']} !important;
+    }}
+    h1, h2, h3, h4, h5, h6 {{
+        color: {theme['text']} !important;
+        font-family: 'Georgia', serif;
+    }}
+    section[data-testid="stSidebar"], [data-testid="stSidebarContent"] {{
+        background-color: {theme['sidebar']} !important;
+    }}
+    section[data-testid="stSidebar"] * {{
+        color: {theme['text']} !important;
+    }}
+    div[data-testid="stMetric"] {{
+        background-color: {theme['card']} !important;
+        border-left: 5px solid {theme['accent']};
+        border-radius: 8px;
+        padding: 10px 16px;
+    }}
+    div[data-testid="stMetric"] * {{ color: {theme['text']} !important; }}
+    div[data-testid="stMetricValue"] {{ color: {theme['primary']} !important; font-weight: 700; }}
+    .banner {{
+        background: linear-gradient(90deg, {theme['primary']}, {theme['accent']});
+        padding: 22px 28px; border-radius: 10px; margin-bottom: 18px;
+    }}
+    .banner h1, .banner p {{ color: #FFFFFF !important; }}
+</style>
+""", unsafe_allow_html=True)
+
+def aplicar_estilo_grafico(fig):
+    fig.update_layout(
+        plot_bgcolor=theme['card'],
+        paper_bgcolor=theme['card'],
+        font=dict(color=theme['text']),
+        colorway=theme['colors']
+    )
+    return fig
+
 st.sidebar.markdown("---")
 st.sidebar.subheader("Filtros")
 
@@ -206,17 +188,34 @@ if df.empty:
     st.stop()
 
 # =========================================================
-# TABS
+# MENÚ DE NAVEGACIÓN MODERNO
 # =========================================================
-tab_resumen, tab_eda, tab_corr, tab_reg, tab_ts, tab_arbol, tab_cluster = st.tabs(
-    ["📊 Resumen", "🔍 Exploración", "🔗 Correlación", "📈 Regresión y Predictor",
-     "📅 Pronóstico", "🌳 Prob. de Puja", "🎯 Perfiles de Compradores"]
+selected_tab = option_menu(
+    menu_title=None,
+    options=["Resumen", "Exploración", "Correlación", "Predictor", "Pronóstico", "Prob. Puja", "Compradores"],
+    icons=["bar-chart-fill", "search", "link-45deg", "calculator-fill", "graph-up-arrow", "diagram-3-fill", "people-fill"],
+    default_index=0,
+    orientation="horizontal",
+    styles={
+        "container": {"padding": "0!important", "background-color": theme['card'], "border-radius": "8px"},
+        "icon": {"color": theme['primary'], "font-size": "14px"},
+        "nav-link": {"font-size": "13px", "text-align": "center", "margin": "0px", "color": theme['text']},
+        "nav-link-selected": {"background-color": theme['accent'], "color": "#FFFFFF"},
+    }
 )
+
+es_tab_resumen = selected_tab == "Resumen"
+es_tab_eda = selected_tab == "Exploración"
+es_tab_corr = selected_tab == "Correlación"
+es_tab_reg = selected_tab == "Predictor"
+es_tab_ts = selected_tab == "Pronóstico"
+es_tab_arbol = selected_tab == "Prob. Puja"
+es_tab_cluster = selected_tab == "Compradores"
 
 # ---------------------------------------------------------
 # TAB 1: RESUMEN
 # ---------------------------------------------------------
-with tab_resumen:
+if es_tab_resumen:
     c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Lotes vendidos", f"{len(df):,}")
     c2.metric("Animales totales", f"{int(df['Cant.'].sum()):,}")
@@ -227,11 +226,10 @@ with tab_resumen:
 
     st.markdown("### Evolución del precio final por Kg")
     serie_diaria = df.groupby("Fecha_TS")["$Final"].mean().reset_index()
-    fig = px.line(serie_diaria, x="Fecha_TS", y="$Final", markers=True,
-                  color_discrete_sequence=[ACCENT])
-    fig.update_layout(plot_bgcolor="white", paper_bgcolor="white",
-                       xaxis_title="Fecha", yaxis_title="Precio Final Promedio ($/Kg)")
-    st.plotly_chart(fig, width='stretch')
+    fig = px.line(serie_diaria, x="Fecha_TS", y="$Final", markers=True)
+    fig.update_layout(xaxis_title="Fecha", yaxis_title="Precio Final Promedio ($/Kg)")
+    fig = aplicar_estilo_grafico(fig)
+    st.plotly_chart(fig, use_container_width=True)
 
     col_a, col_b = st.columns(2)
     with col_a:
@@ -239,31 +237,31 @@ with tab_resumen:
         vol_sexo = df["Sexo"].value_counts().reset_index()
         vol_sexo.columns = ["Sexo", "Lotes"]
         vol_sexo["Etiqueta"] = vol_sexo["Sexo"].map(lambda s: etiqueta_sexo(s))
-        fig2 = px.bar(vol_sexo, x="Lotes", y="Etiqueta", orientation="h",
-                      color_discrete_sequence=[GREEN])
-        fig2.update_layout(plot_bgcolor="white", paper_bgcolor="white", yaxis_title="")
-        st.plotly_chart(fig2, width='stretch')
+        fig2 = px.bar(vol_sexo, x="Lotes", y="Etiqueta", orientation="h")
+        fig2.update_layout(yaxis_title="")
+        fig2 = aplicar_estilo_grafico(fig2)
+        st.plotly_chart(fig2, use_container_width=True)
     with col_b:
         st.markdown("### Top 10 Procedencias por volumen")
         vol_proc = df["Procedencia"].value_counts().head(10).reset_index()
         vol_proc.columns = ["Procedencia", "Lotes"]
-        fig3 = px.bar(vol_proc, x="Lotes", y="Procedencia", orientation="h",
-                      color_discrete_sequence=[PRIMARY])
-        fig3.update_layout(plot_bgcolor="white", paper_bgcolor="white", yaxis_title="")
-        st.plotly_chart(fig3, width='stretch')
+        fig3 = px.bar(vol_proc, x="Lotes", y="Procedencia", orientation="h")
+        fig3.update_layout(yaxis_title="")
+        fig3 = aplicar_estilo_grafico(fig3)
+        st.plotly_chart(fig3, use_container_width=True)
 
 # ---------------------------------------------------------
 # TAB 2: EDA
 # ---------------------------------------------------------
-with tab_eda:
+if es_tab_eda:
     st.markdown("### Distribución general de precios")
-    fig = px.histogram(df, x="$Final", nbins=40, color_discrete_sequence=[ACCENT])
+    fig = px.histogram(df, x="$Final", nbins=40)
     promedio = df["$Final"].mean()
     fig.add_vline(x=promedio, line_dash="dash", line_color="red",
                   annotation_text=f"Promedio: ${promedio:,.0f}")
-    fig.update_layout(plot_bgcolor="white", paper_bgcolor="white",
-                       xaxis_title="Precio Final ($/Kg)", yaxis_title="Frecuencia")
-    st.plotly_chart(fig, width='stretch')
+    fig.update_layout(xaxis_title="Precio Final ($/Kg)", yaxis_title="Frecuencia")
+    fig = aplicar_estilo_grafico(fig)
+    st.plotly_chart(fig, use_container_width=True)
 
     col1, col2 = st.columns(2)
     top5 = df["Sexo"].value_counts().head(5).index
@@ -275,17 +273,17 @@ with tab_eda:
         fig2 = px.scatter(df_top5, x="P.Prom", y="$Final", color="Etiqueta",
                           opacity=0.6, trendline="ols",
                           labels={"P.Prom": "Peso Promedio (Kg)", "$Final": "Precio Final ($/Kg)"})
-        fig2.update_layout(plot_bgcolor="white", paper_bgcolor="white")
-        st.plotly_chart(fig2, width='stretch')
+        fig2 = aplicar_estilo_grafico(fig2)
+        st.plotly_chart(fig2, use_container_width=True)
 
     with col2:
         st.markdown("### Rango de precios por categoría (Top 5)")
         orden = df_top5.groupby("Etiqueta")["$Final"].median().sort_values(ascending=False).index
         fig3 = px.box(df_top5, x="Etiqueta", y="$Final", color="Etiqueta",
                       category_orders={"Etiqueta": list(orden)})
-        fig3.update_layout(plot_bgcolor="white", paper_bgcolor="white", showlegend=False,
-                           xaxis_title="Categoría", yaxis_title="Precio Final ($/Kg)")
-        st.plotly_chart(fig3, width='stretch')
+        fig3.update_layout(showlegend=False, xaxis_title="Categoría", yaxis_title="Precio Final ($/Kg)")
+        fig3 = aplicar_estilo_grafico(fig3)
+        st.plotly_chart(fig3, use_container_width=True)
 
     st.info(
         "💡 **Interpretación:** entre más pese el lote, menor suele ser el valor por Kg (aunque el valor final "
@@ -296,7 +294,7 @@ with tab_eda:
 # ---------------------------------------------------------
 # TAB 3: CORRELACIÓN
 # ---------------------------------------------------------
-with tab_corr:
+if es_tab_corr:
     st.markdown("### Matriz de correlación contra el Precio Final")
     df_dummies = pd.get_dummies(df, columns=["Sexo"], drop_first=True)
     cols_num = ["Cant.", "P.Prom", "$Base", "$Final"] + [c for c in df_dummies.columns if c.startswith("Sexo_")]
@@ -306,14 +304,15 @@ with tab_corr:
     fig = px.bar(corr_obj, x="$Final", y=corr_obj.index, orientation="h",
                 color="$Final", color_continuous_scale=["#C0392B", "#EEE", "#27AE60"],
                 labels={"$Final": "Correlación con Precio Final", "y": "Variable"})
-    fig.update_layout(plot_bgcolor="white", paper_bgcolor="white", height=500)
-    st.plotly_chart(fig, width='stretch')
+    fig.update_layout(height=500)
+    fig = aplicar_estilo_grafico(fig)
+    st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("### Mapa de calor — variables numéricas")
     fig_hm = px.imshow(df_dummies[cols_num].corr(numeric_only=True).round(2),
                        text_auto=True, color_continuous_scale="RdYlGn", aspect="auto")
-    fig_hm.update_layout(paper_bgcolor="white")
-    st.plotly_chart(fig_hm, width='stretch')
+    fig_hm = aplicar_estilo_grafico(fig_hm)
+    st.plotly_chart(fig_hm, use_container_width=True)
 
 # ---------------------------------------------------------
 # TAB 4: REGRESIÓN + PREDICTOR
@@ -359,8 +358,7 @@ def entrenar_modelos(df_in: pd.DataFrame):
         "horas": sorted(d["Hora_Entrada"].astype(str).unique()),
     }
 
-
-with tab_reg:
+if es_tab_reg:
     modelos = entrenar_modelos(df)
 
     c1, c2, c3 = st.columns(3)
@@ -384,9 +382,9 @@ with tab_reg:
         textposition="outside",
     ))
     fig.add_vline(x=0, line_color="black", line_dash="dash")
-    fig.update_layout(plot_bgcolor="white", paper_bgcolor="white", height=500,
-                      xaxis_title="Impacto en $ COP", yaxis_title="")
-    st.plotly_chart(fig, width='stretch')
+    fig.update_layout(height=500, xaxis_title="Impacto en $ COP", yaxis_title="")
+    fig = aplicar_estilo_grafico(fig)
+    st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("---")
     st.markdown("## 🧮 Predictor de Precio por Kilo")
@@ -434,7 +432,7 @@ with tab_reg:
 # ---------------------------------------------------------
 # TAB 5: SERIES DE TIEMPO
 # ---------------------------------------------------------
-with tab_ts:
+if es_tab_ts:
     st.markdown("### Pronóstico de precio semanal (Holt-Winters)")
 
     df_ts = df_total.copy().set_index("Fecha_TS").sort_index()
@@ -469,12 +467,12 @@ with tab_ts:
 
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=precio_semanal.index, y=precio_semanal.values,
-                                 mode="lines+markers", name="Histórico", line=dict(color=PRIMARY)))
+                                 mode="lines+markers", name="Histórico"))
         fig.add_trace(go.Scatter(x=forecast_full.index, y=forecast_full.values,
-                                 mode="lines+markers", name="Pronóstico", line=dict(color=ACCENT, dash="dash")))
-        fig.update_layout(plot_bgcolor="white", paper_bgcolor="white",
-                          xaxis_title="Semana", yaxis_title="Precio Final Promedio ($/Kg)")
-        st.plotly_chart(fig, width='stretch')
+                                 mode="lines+markers", name="Pronóstico", line=dict(dash="dash")))
+        fig.update_layout(xaxis_title="Semana", yaxis_title="Precio Final Promedio ($/Kg)")
+        fig = aplicar_estilo_grafico(fig)
+        st.plotly_chart(fig, use_container_width=True)
 
         st.info(
             "💡 Se eligió **Holt-Winters** (tendencia aditiva, sin componente estacional) sobre SARIMA porque "
@@ -497,8 +495,7 @@ def entrenar_arbol(df_in: pd.DataFrame):
     acc = modelo.score(X_te, y_te)
     return modelo, X.columns.tolist(), acc
 
-
-with tab_arbol:
+if es_tab_arbol:
     st.markdown("### ¿Qué tan probable es que un lote reciba puja (precio final > precio base)?")
     modelo_arbol, cols_arbol, acc_arbol = entrenar_arbol(df)
     st.metric("Precisión del árbol (test)", f"{acc_arbol*100:.1f}%")
@@ -530,8 +527,7 @@ def entrenar_clusters(df_in: pd.DataFrame, k: int):
     resumen = d.groupby("Perfil_ID")[["P.Prom", "$Final", "Margen_Puja", "Cant."]].mean().round(1)
     return d, resumen
 
-
-with tab_cluster:
+if es_tab_cluster:
     st.markdown("### Segmentación de lotes por comportamiento de compra (K-Means)")
     k_sel = st.slider("Número de perfiles (K)", 2, 6, 3)
     d_kmeans, resumen = entrenar_clusters(df, k_sel)
@@ -542,14 +538,15 @@ with tab_cluster:
         hover_data={"Margen_Puja": True},
         labels={"P.Prom": "Peso Promedio (Kg)", "$Final": "Precio Final ($/Kg)", "color": "Perfil"},
     )
-    fig.update_layout(plot_bgcolor="white", paper_bgcolor="white", height=550)
-    st.plotly_chart(fig, width='stretch')
+    fig.update_layout(height=550)
+    fig = aplicar_estilo_grafico(fig)
+    st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("### Resumen por perfil")
     st.dataframe(resumen.rename(columns={
         "P.Prom": "Peso Prom. (Kg)", "$Final": "Precio Prom. ($/Kg)",
         "Margen_Puja": "Margen de Puja ($)", "Cant.": "Animales por Lote"
-    }), width='stretch')
+    }), use_container_width=True)
 
     if k_sel == 3:
         st.info(
