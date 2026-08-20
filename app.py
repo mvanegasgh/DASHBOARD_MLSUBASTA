@@ -429,18 +429,45 @@ elif selected_tab == "Exploración":
 # TAB 3: CORRELACIÓN
 # ---------------------------------------------------------
 elif selected_tab == "Correlación":
-    st.markdown("### Matriz de correlación contra el Precio Final")
+    st.markdown("### 📊 Matriz de Correlación Completa (Heatmap)")
+    
+    # 1. Mapa de Calor (Heatmap) de variables numéricas directas
+    cols_heatmap = ["$Final", "$Base", "P.Prom", "Cant.", "Margen_Puja"]
+    corr_matrix = df[cols_heatmap].corr(numeric_only=True)
+
+    fig_heatmap = px.imshow(
+        corr_matrix,
+        text_auto=".2f",
+        color_continuous_scale=["#E11D48", "#F8FAFC", "#008037"],
+        labels=dict(color="Correlación"),
+        x=["Precio Final", "Precio Base", "Peso Prom.", "Cantidad", "Margen Puja"],
+        y=["Precio Final", "Precio Base", "Peso Prom.", "Cantidad", "Margen Puja"]
+    )
+    fig_heatmap.update_layout(height=450)
+    fig_heatmap = aplicar_estilo_grafico(fig_heatmap)
+    st.plotly_chart(fig_heatmap, use_container_width=True)
+
+    st.markdown("---")
+    st.markdown("### 🎯 Correlación de Categorías y Variables vs. Precio Final")
+    
+    # 2. Gráfico de barras horizontales (Categorías Dummy)
     df_dummies = pd.get_dummies(df, columns=["Sexo"], drop_first=True)
     cols_num = ["Cant.", "P.Prom", "$Base", "$Final"] + [c for c in df_dummies.columns if c.startswith("Sexo_")]
     corr_obj = df_dummies[cols_num].corr(numeric_only=True)[["$Final"]].sort_values(by="$Final", ascending=False)
     corr_obj = corr_obj.drop(index="$Final")
 
-    fig = px.bar(corr_obj, x="$Final", y=corr_obj.index, orientation="h",
-                color="$Final", color_continuous_scale=["#E11D48", "#F8FAFC", "#008037"],
-                labels={"$Final": "Correlación con Precio Final", "y": "Variable"})
-    fig.update_layout(height=500)
-    fig = aplicar_estilo_grafico(fig)
-    st.plotly_chart(fig, use_container_width=True)
+    fig_bar = px.bar(
+        corr_obj, 
+        x="$Final", 
+        y=corr_obj.index, 
+        orientation="h",
+        color="$Final", 
+        color_continuous_scale=["#E11D48", "#F8FAFC", "#008037"],
+        labels={"$Final": "Correlación con Precio Final", "index": "Variable / Categoría"}
+    )
+    fig_bar.update_layout(height=500)
+    fig_bar = aplicar_estilo_grafico(fig_bar)
+    st.plotly_chart(fig_bar, use_container_width=True)
 
 # ---------------------------------------------------------
 # TAB 4: PREDICTOR
