@@ -23,113 +23,128 @@ import matplotlib.pyplot as plt
 # CONFIGURACIÓN DE PÁGINA
 # =========================================================
 st.set_page_config(
-    page_title="Suganorte S.A. | Analítica de Subasta Ganadera",
+    page_title="Suganorte S.A. | Analítica de Subasta",
     page_icon="🐂",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 # =========================================================
-# PALETA INSTITUCIONAL SUGANORTE S.A.
+# ESTILOS CSS EMPRESARIALES (SUGANORTE S.A.)
 # =========================================================
-theme = {
-    "bg": "#F8F9FA",
-    "sidebar": "#FFFFFF",
-    "primary": "#003399",      # Azul Institucional Suganorte
-    "accent": "#008037",       # Verde Ganadero
-    "gold": "#FFC107",         # Amarillo/Dorado Acento
-    "card": "#FFFFFF",
-    "text": "#1A1A1A",
-    "border": "#E2E8F0",
-    "colors": ["#003399", "#008037", "#D97706", "#2563EB", "#059669"]
-}
-
-# Estilos CSS Unificados e Institucionales
-st.markdown(f"""
+st.markdown("""
 <style>
-    /* Fondo principal y textos */
-    html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {{
-        background-color: {theme['bg']} !important;
-        color: {theme['text']} !important;
-        font-family: 'Segoe UI', Arial, sans-serif;
-    }}
-    p, span, label, li, div, small, [data-testid="stMarkdownContainer"] p {{
-        color: {theme['text']} !important;
-    }}
-    h1, h2, h3, h4, h5, h6 {{
-        color: {theme['primary']} !important;
-        font-weight: 700;
-    }}
+    /* Importar fuente sans-serif moderna */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-    /* Barra lateral */
-    section[data-testid="stSidebar"], [data-testid="stSidebarContent"] {{
-        background-color: {theme['sidebar']} !important;
-        border-right: 1px solid {theme['border']};
-    }}
-    section[data-testid="stSidebar"] * {{
-        color: {theme['text']} !important;
-    }}
+    html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
+        background-color: #F4F6F9 !important;
+        color: #1E293B !important;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+    }
+
+    /* Reset tipográfico para eliminar fuentes tipo periódico/serif */
+    h1, h2, h3, h4, h5, h6, p, span, label, input, button {
+        font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+    }
+
+    /* Header Ejecutivo Suganorte */
+    .suganorte-banner {
+        background: linear-gradient(135deg, #0D47A1 0%, #052352 100%);
+        border-bottom: 4px solid #008037;
+        padding: 24px 30px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 14px rgba(13, 71, 161, 0.15);
+    }
+    .suganorte-banner h1 {
+        color: #FFFFFF !important;
+        margin: 0 !important;
+        font-size: 1.8rem !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.02em;
+    }
+    .suganorte-banner p {
+        color: #FFC107 !important;
+        margin-top: 6px !important;
+        margin-bottom: 0 !important;
+        font-size: 0.95rem !important;
+        font-weight: 500 !important;
+    }
 
     /* Tarjetas de Métricas (KPIs) */
-    div[data-testid="stMetric"] {{
-        background-color: {theme['card']} !important;
-        border: 1px solid {theme['border']} !important;
-        border-left: 5px solid {theme['primary']} !important;
-        border-radius: 8px !important;
-        padding: 12px 16px !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.03) !important;
-    }}
-    div[data-testid="stMetric"] label {{
-        color: #4A5568 !important;
+    div[data-testid="stMetric"] {
+        background-color: #FFFFFF !important;
+        border: 1px solid #E2E8F0 !important;
+        border-top: 4px solid #0D47A1 !important;
+        border-radius: 10px !important;
+        padding: 16px 20px !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03) !important;
+    }
+    div[data-testid="stMetric"] label {
+        color: #64748B !important;
+        font-size: 0.85rem !important;
         font-weight: 600 !important;
-    }}
-    div[data-testid="stMetricValue"] {{
-        color: {theme['primary']} !important;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+    div[data-testid="stMetricValue"] {
+        color: #0F172A !important;
+        font-size: 1.8rem !important;
         font-weight: 700 !important;
-    }}
+    }
 
-    /* Header Institucional */
-    .suganorte-banner {{
-        background: linear-gradient(135deg, {theme['primary']} 0%, #001A4D 100%);
-        border-bottom: 5px solid {theme['accent']};
-        padding: 22px 28px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-    }}
-    .suganorte-banner h1 {{
-        color: #FFFFFF !important;
-        margin: 0;
-        font-size: 2rem;
-    }}
-    .suganorte-banner p {{
-        color: {theme['gold']} !important;
-        margin-top: 6px;
-        font-size: 1.05rem;
-        font-weight: 500;
-    }}
+    /* Barra Lateral (Sidebar) Blanca Limpia */
+    section[data-testid="stSidebar"], [data-testid="stSidebarContent"] {
+        background-color: #FFFFFF !important;
+        border-right: 1px solid #E2E8F0 !important;
+    }
+    section[data-testid="stSidebar"] h1, 
+    section[data-testid="stSidebar"] h2, 
+    section[data-testid="stSidebar"] h3 {
+        color: #0D47A1 !important;
+    }
 
-    /* Botones primarios */
-    .stButton>button {{
-        background-color: {theme['accent']} !important;
+    /* Estilizado de Filtros e Inputs */
+    .stMultiSelect, .stDateInput, .stSelectbox, .stNumberInput {
+        background-color: #FFFFFF !important;
+    }
+
+    /* Botones Modernos */
+    .stButton>button {
+        background-color: #008037 !important;
         color: #FFFFFF !important;
-        border-radius: 6px !important;
+        border-radius: 8px !important;
         border: none !important;
         font-weight: 600 !important;
-        padding: 8px 20px !important;
-    }}
-    .stButton>button:hover {{
+        padding: 10px 24px !important;
+        transition: all 0.2s ease;
+    }
+    .stButton>button:hover {
         background-color: #006028 !important;
-    }}
+        box-shadow: 0 4px 12px rgba(0, 128, 55, 0.2) !important;
+    }
+
+    /* Títulos de secciones */
+    .stMain h3 {
+        color: #0F172A !important;
+        font-weight: 700 !important;
+        font-size: 1.25rem !important;
+        margin-top: 1.5rem !important;
+        margin-bottom: 1rem !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
+theme_colors = ["#0D47A1", "#008037", "#D97706", "#2563EB", "#059669"]
+
 def aplicar_estilo_grafico(fig):
     fig.update_layout(
-        plot_bgcolor=theme['card'],
-        paper_bgcolor=theme['card'],
-        font=dict(color=theme['text']),
-        colorway=theme['colors']
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF",
+        font=dict(family="Inter, sans-serif", color="#334155"),
+        colorway=theme_colors,
+        margin=dict(l=20, r=20, t=40, b=20)
     )
     return fig
 
@@ -165,7 +180,7 @@ def etiqueta_sexo(codigo: str) -> str:
 # SIDEBAR - FILTROS GLOBALES
 # =========================================================
 st.sidebar.title("🐂 Suganorte S.A.")
-st.sidebar.caption("Analítica Predictiva de Subasta Ganadera — Zarzal, Valle")
+st.sidebar.caption("Plataforma de Analítica Predictiva — Zarzal, Valle")
 st.sidebar.markdown("---")
 
 st.sidebar.subheader("🔍 Filtros de Consulta")
@@ -187,7 +202,7 @@ procedencias_sel = st.sidebar.multiselect(
 )
 
 st.sidebar.markdown("---")
-st.sidebar.caption("Fuente: Registros de subasta Suganorte · ≈9 meses de ventas")
+st.sidebar.caption("Fuente: Registros Oficiales Suganorte")
 
 # Aplicar filtros
 if isinstance(rango_fechas, tuple) and len(rango_fechas) == 2:
@@ -206,12 +221,12 @@ if procedencias_sel:
 df = df_total[mask].copy()
 
 # =========================================================
-# BANNER INSTITUCIONAL
+# BANNER INSTITUCIONAL (TEXTO BLANCO Y LEGIBLE)
 # =========================================================
 st.markdown("""
 <div class="suganorte-banner">
     <h1>Subasta Ganadera Suganorte S.A.</h1>
-    <p>Analítica Predictiva · Precio por Kilo · Comportamiento de Puja · Pronósticos</p>
+    <p>Panel de Inteligencia de Negocios · Analítica Predictiva de Precios & Comportamiento de Puja</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -220,7 +235,7 @@ if df.empty:
     st.stop()
 
 # =========================================================
-# MENÚ DE NAVEGACIÓN
+# MENÚ DE NAVEGACIÓN MODERNO
 # =========================================================
 selected_tab = option_menu(
     menu_title=None,
@@ -229,10 +244,10 @@ selected_tab = option_menu(
     default_index=0,
     orientation="horizontal",
     styles={
-        "container": {"padding": "4px!important", "background-color": "#E2E8F0", "border-radius": "8px"},
-        "icon": {"color": theme['primary'], "font-size": "14px"},
-        "nav-link": {"font-size": "13px", "text-align": "center", "margin": "0px", "color": theme['primary'], "font-weight": "500"},
-        "nav-link-selected": {"background-color": theme['primary'], "color": "#FFFFFF", "font-weight": "600"},
+        "container": {"padding": "6px!important", "background-color": "#FFFFFF", "border-radius": "10px", "border": "1px solid #E2E8F0"},
+        "icon": {"color": "#0D47A1", "font-size": "14px"},
+        "nav-link": {"font-size": "13px", "text-align": "center", "margin": "2px", "color": "#475569", "font-weight": "500", "border-radius": "6px"},
+        "nav-link-selected": {"background-color": "#0D47A1", "color": "#FFFFFF", "font-weight": "600"},
     }
 )
 
@@ -289,7 +304,7 @@ if es_tab_eda:
     st.markdown("### Distribución general de precios")
     fig = px.histogram(df, x="$Final", nbins=40)
     promedio = df["$Final"].mean()
-    fig.add_vline(x=promedio, line_dash="dash", line_color="red",
+    fig.add_vline(x=promedio, line_dash="dash", line_color="#E11D48",
                   annotation_text=f"Promedio: ${promedio:,.0f}")
     fig.update_layout(xaxis_title="Precio Final ($/Kg)", yaxis_title="Frecuencia")
     fig = aplicar_estilo_grafico(fig)
@@ -334,7 +349,7 @@ if es_tab_corr:
     corr_obj = corr_obj.drop(index="$Final")
 
     fig = px.bar(corr_obj, x="$Final", y=corr_obj.index, orientation="h",
-                color="$Final", color_continuous_scale=["#C0392B", "#EEE", "#008037"],
+                color="$Final", color_continuous_scale=["#E11D48", "#F8FAFC", "#008037"],
                 labels={"$Final": "Correlación con Precio Final", "y": "Variable"})
     fig.update_layout(height=500)
     fig = aplicar_estilo_grafico(fig)
@@ -406,14 +421,14 @@ if es_tab_reg:
 
     st.markdown("### Impacto económico por variable (Top 15)")
     top15 = modelos["df_impactos"].head(15).sort_values("Impacto_Pesos")
-    colores = ["#C0392B" if v < 0 else "#008037" for v in top15["Impacto_Pesos"]]
+    colores = ["#E11D48" if v < 0 else "#008037" for v in top15["Impacto_Pesos"]]
     fig = go.Figure(go.Bar(
         x=top15["Impacto_Pesos"], y=top15["Variable"], orientation="h",
         marker_color=colores,
         text=[f"{'+' if v > 0 else ''}${v:,.0f}" for v in top15["Impacto_Pesos"]],
         textposition="outside",
     ))
-    fig.add_vline(x=0, line_color="black", line_dash="dash")
+    fig.add_vline(x=0, line_color="#64748B", line_dash="dash")
     fig.update_layout(height=500, xaxis_title="Impacto en $ COP", yaxis_title="")
     fig = aplicar_estilo_grafico(fig)
     st.plotly_chart(fig, use_container_width=True)
@@ -499,9 +514,9 @@ if es_tab_ts:
 
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=precio_semanal.index, y=precio_semanal.values,
-                                 mode="lines+markers", name="Histórico", line=dict(color=theme['primary'])))
+                                 mode="lines+markers", name="Histórico", line=dict(color="#0D47A1")))
         fig.add_trace(go.Scatter(x=forecast_full.index, y=forecast_full.values,
-                                 mode="lines+markers", name="Pronóstico", line=dict(dash="dash", color=theme['accent'])))
+                                 mode="lines+markers", name="Pronóstico", line=dict(dash="dash", color="#008037")))
         fig.update_layout(xaxis_title="Semana", yaxis_title="Precio Final Promedio ($/Kg)")
         fig = aplicar_estilo_grafico(fig)
         st.plotly_chart(fig, use_container_width=True)
