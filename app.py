@@ -1,6 +1,6 @@
 """
-Dashboard de Analítica Predictiva - Subasta Ganadera Suganorte (Zarzal, Valle)
-Construido con Streamlit a partir del notebook de analítica predictiva.
+Dashboard de Analítica Predictiva - Subasta Ganadera Suganorte S.A. (Zarzal, Valle)
+Interfaz Institucional Oficial alineada a la marca Suganorte S.A.
 """
 
 import re
@@ -23,120 +23,130 @@ import matplotlib.pyplot as plt
 # CONFIGURACIÓN DE PÁGINA
 # =========================================================
 st.set_page_config(
-    page_title="Suganorte S.A. | Analítica de Subasta",
+    page_title="Suganorte S.A. | Analítica Predictiva",
     page_icon="🐂",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 # =========================================================
-# ESTILOS CSS EMPRESARIALES (SUGANORTE S.A.)
+# RECURSOS DE MARCA (LOGOS OFICIALES)
 # =========================================================
-st.markdown("""
-<style>
-    /* Importar fuente sans-serif moderna */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+LOGO_COLOR_URL = "https://i.ibb.co/68v1rS0/logo2x-suganorte.png"
+LOGO_WHITE_URL = "https://i.ibb.co/hK8bBcx/logo2x-suganorte-white.png"
 
-    html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
+# =========================================================
+# ESTILOS CSS CON IDENTIDAD VISUAL EXACTA
+# =========================================================
+st.markdown(f"""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {{
         background-color: #F4F6F9 !important;
         color: #1E293B !important;
         font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
-    }
+    }}
 
-    /* Reset tipográfico para eliminar fuentes tipo periódico/serif */
-    h1, h2, h3, h4, h5, h6, p, span, label, input, button {
+    h1, h2, h3, h4, h5, h6, p, span, label, input, button {{
         font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
-    }
+    }}
 
-    /* Header Ejecutivo Suganorte */
-    .suganorte-banner {
-        background: linear-gradient(135deg, #0D47A1 0%, #052352 100%);
-        border-bottom: 4px solid #008037;
-        padding: 24px 30px;
+    /* BANNER INSTITUCIONAL OFICIAL */
+    .suganorte-header-container {{
+        background: #0B2265;
         border-radius: 12px;
+        overflow: hidden;
         margin-bottom: 24px;
-        box-shadow: 0 4px 14px rgba(13, 71, 161, 0.15);
-    }
-    .suganorte-banner h1 {
+        box-shadow: 0 4px 15px rgba(11, 34, 101, 0.18);
+    }}
+    .tricolor-stripe {{
+        height: 6px;
+        background: linear-gradient(90deg, #FFD100 0% 33%, #008037 33% 66%, #E11D48 66% 100%);
+        width: 100%;
+    }}
+    .suganorte-banner-body {{
+        padding: 24px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+    }}
+    .suganorte-title {{
         color: #FFFFFF !important;
         margin: 0 !important;
-        font-size: 1.8rem !important;
-        font-weight: 700 !important;
+        font-size: 1.75rem !important;
+        font-weight: 800 !important;
         letter-spacing: -0.02em;
-    }
-    .suganorte-banner p {
-        color: #FFC107 !important;
+    }}
+    .suganorte-subtitle {{
+        color: #FFD100 !important;
         margin-top: 6px !important;
         margin-bottom: 0 !important;
         font-size: 0.95rem !important;
-        font-weight: 500 !important;
-    }
+        font-weight: 600 !important;
+    }}
 
-    /* Tarjetas de Métricas (KPIs) */
-    div[data-testid="stMetric"] {
+    /* METRICAS Y KPIS */
+    div[data-testid="stMetric"] {{
         background-color: #FFFFFF !important;
         border: 1px solid #E2E8F0 !important;
-        border-top: 4px solid #0D47A1 !important;
+        border-top: 4px solid #008037 !important;
         border-radius: 10px !important;
         padding: 16px 20px !important;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03) !important;
-    }
-    div[data-testid="stMetric"] label {
+    }}
+    div[data-testid="stMetric"] label {{
         color: #64748B !important;
-        font-size: 0.85rem !important;
-        font-weight: 600 !important;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-    }
-    div[data-testid="stMetricValue"] {
-        color: #0F172A !important;
-        font-size: 1.8rem !important;
+        font-size: 0.8rem !important;
         font-weight: 700 !important;
-    }
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }}
+    div[data-testid="stMetricValue"] {{
+        color: #0B2265 !important;
+        font-size: 1.8rem !important;
+        font-weight: 800 !important;
+    }}
 
-    /* Barra Lateral (Sidebar) Blanca Limpia */
-    section[data-testid="stSidebar"], [data-testid="stSidebarContent"] {
+    /* BARRA LATERAL (SIDEBAR) */
+    section[data-testid="stSidebar"], [data-testid="stSidebarContent"] {{
         background-color: #FFFFFF !important;
         border-right: 1px solid #E2E8F0 !important;
-    }
+    }}
     section[data-testid="stSidebar"] h1, 
     section[data-testid="stSidebar"] h2, 
-    section[data-testid="stSidebar"] h3 {
-        color: #0D47A1 !important;
-    }
+    section[data-testid="stSidebar"] h3 {{
+        color: #0B2265 !important;
+        font-weight: 700 !important;
+    }}
 
-    /* Estilizado de Filtros e Inputs */
-    .stMultiSelect, .stDateInput, .stSelectbox, .stNumberInput {
-        background-color: #FFFFFF !important;
-    }
-
-    /* Botones Modernos */
-    .stButton>button {
+    /* BOTONES */
+    .stButton>button {{
         background-color: #008037 !important;
         color: #FFFFFF !important;
         border-radius: 8px !important;
         border: none !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
         padding: 10px 24px !important;
         transition: all 0.2s ease;
-    }
-    .stButton>button:hover {
+    }}
+    .stButton>button:hover {{
         background-color: #006028 !important;
-        box-shadow: 0 4px 12px rgba(0, 128, 55, 0.2) !important;
-    }
+        box-shadow: 0 4px 12px rgba(0, 128, 55, 0.25) !important;
+    }}
 
-    /* Títulos de secciones */
-    .stMain h3 {
-        color: #0F172A !important;
+    .stMain h3 {{
+        color: #0B2265 !important;
         font-weight: 700 !important;
-        font-size: 1.25rem !important;
+        font-size: 1.2rem !important;
         margin-top: 1.5rem !important;
         margin-bottom: 1rem !important;
-    }
+    }}
 </style>
 """, unsafe_allow_html=True)
 
-theme_colors = ["#0D47A1", "#008037", "#D97706", "#2563EB", "#059669"]
+theme_colors = ["#0B2265", "#008037", "#D97706", "#2563EB", "#059669"]
 
 def aplicar_estilo_grafico(fig):
     fig.update_layout(
@@ -177,9 +187,9 @@ def etiqueta_sexo(codigo: str) -> str:
     return f"{codigo} · {SEXO_LABELS.get(codigo, codigo)}"
 
 # =========================================================
-# SIDEBAR - FILTROS GLOBALES
+# SIDEBAR - LOGO Y FILTROS
 # =========================================================
-st.sidebar.title("🐂 Suganorte S.A.")
+st.sidebar.image(LOGO_COLOR_URL, use_container_width=True)
 st.sidebar.caption("Plataforma de Analítica Predictiva — Zarzal, Valle")
 st.sidebar.markdown("---")
 
@@ -202,7 +212,7 @@ procedencias_sel = st.sidebar.multiselect(
 )
 
 st.sidebar.markdown("---")
-st.sidebar.caption("Fuente: Registros Oficiales Suganorte")
+st.sidebar.caption("Líderes en comercialización ganadera en el Suroccidente")
 
 # Aplicar filtros
 if isinstance(rango_fechas, tuple) and len(rango_fechas) == 2:
@@ -221,12 +231,18 @@ if procedencias_sel:
 df = df_total[mask].copy()
 
 # =========================================================
-# BANNER INSTITUCIONAL (TEXTO BLANCO Y LEGIBLE)
+# ENCABEZADO PRINCIPAL
 # =========================================================
-st.markdown("""
-<div class="suganorte-banner">
-    <h1>Subasta Ganadera Suganorte S.A.</h1>
-    <p>Panel de Inteligencia de Negocios · Analítica Predictiva de Precios & Comportamiento de Puja</p>
+st.markdown(f"""
+<div class="suganorte-header-container">
+    <div class="tricolor-stripe"></div>
+    <div class="suganorte-banner-body">
+        <div>
+            <h1 class="suganorte-title">Plataforma de Analítica Predictiva</h1>
+            <p class="suganorte-subtitle">Subasta Ganadera Suganorte S.A. · Histórico & Pronósticos</p>
+        </div>
+        <img src="{LOGO_WHITE_URL}" style="max-height: 55px; width: auto;" alt="Suganorte Logo Blanco">
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -235,7 +251,7 @@ if df.empty:
     st.stop()
 
 # =========================================================
-# MENÚ DE NAVEGACIÓN MODERNO
+# MENÚ DE NAVEGACIÓN
 # =========================================================
 selected_tab = option_menu(
     menu_title=None,
@@ -245,9 +261,9 @@ selected_tab = option_menu(
     orientation="horizontal",
     styles={
         "container": {"padding": "6px!important", "background-color": "#FFFFFF", "border-radius": "10px", "border": "1px solid #E2E8F0"},
-        "icon": {"color": "#0D47A1", "font-size": "14px"},
-        "nav-link": {"font-size": "13px", "text-align": "center", "margin": "2px", "color": "#475569", "font-weight": "500", "border-radius": "6px"},
-        "nav-link-selected": {"background-color": "#0D47A1", "color": "#FFFFFF", "font-weight": "600"},
+        "icon": {"color": "#0B2265", "font-size": "14px"},
+        "nav-link": {"font-size": "13px", "text-align": "center", "margin": "2px", "color": "#475569", "font-weight": "600", "border-radius": "6px"},
+        "nav-link-selected": {"background-color": "#0B2265", "color": "#FFFFFF", "font-weight": "700"},
     }
 )
 
@@ -514,7 +530,7 @@ if es_tab_ts:
 
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=precio_semanal.index, y=precio_semanal.values,
-                                 mode="lines+markers", name="Histórico", line=dict(color="#0D47A1")))
+                                 mode="lines+markers", name="Histórico", line=dict(color="#0B2265")))
         fig.add_trace(go.Scatter(x=forecast_full.index, y=forecast_full.values,
                                  mode="lines+markers", name="Pronóstico", line=dict(dash="dash", color="#008037")))
         fig.update_layout(xaxis_title="Semana", yaxis_title="Precio Final Promedio ($/Kg)")
