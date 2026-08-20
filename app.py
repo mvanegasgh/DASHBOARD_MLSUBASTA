@@ -34,18 +34,30 @@ st.set_page_config(
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined|Material+Symbols+Outlined');
+
+    /* CORRECCIÓN ICONO COLLAPSE DE STREAMLIT */
+    [data-testid="stSidebarCollapseButton"] *,
+    [data-testid="stSidebarCollapseButton"] button span,
+    [data-testid="stSidebarCollapseButton"] span,
+    i.material-icons,
+    .material-icons,
+    .material-symbols-outlined {
+        font-family: 'Material Symbols Outlined', 'Material Icons', sans-serif !important;
+        font-weight: normal !important;
+        font-style: normal !important;
+        text-transform: none !important;
+        letter-spacing: normal !important;
+        word-wrap: normal !important;
+        white-space: nowrap !important;
+        direction: ltr !important;
+    }
 
     /* Fondo general */
     html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stMain"] {
         background-color: #F8FAFC !important;
         color: #0F172A !important;
         font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
-    }
-
-    /* Ajuste para iconos nativos */
-    [data-testid="stSidebarCollapseButton"] button span,
-    [data-testid="stSidebarCollapseButton"] span {
-        font-family: "Source Sans Pro", sans-serif, "Material Icons" !important;
     }
 
     /* LOGO SIDEBAR HTML */
@@ -710,7 +722,7 @@ elif selected_tab == "Compradores":
     st.plotly_chart(fig, use_container_width=True)
 
 # =========================================================
-# FOOTER INSTITUCIONAL REPLICADO (HTML SINTAXIS PLANA)
+# FOOTER INSTITUCIONAL REPLICADO
 # =========================================================
 html_footer = """
 <div class="suganorte-footer-container">
