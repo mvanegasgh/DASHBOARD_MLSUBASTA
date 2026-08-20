@@ -748,7 +748,6 @@ elif selected_tab == "Prob. Puja":
 
     # Cálculo inmediato de Probabilidades
     probs = modelo_arbol.predict_proba(input_data)[0]
-    # Comprobación de orden de clases (0: Sin Puja, 1: Con Puja)
     clases = list(modelo_arbol.classes_)
     idx_puja = clases.index(1) if 1 in clases else 1
     prob_con_puja = probs[idx_puja] * 100
@@ -808,22 +807,88 @@ elif selected_tab == "Prob. Puja":
 # ---------------------------------------------------------
 elif selected_tab == "Compradores":
     st.markdown("### Segmentación por comportamiento de compra (K-Means)")
+    st.caption("Identifica patrones de compra analizando la relación entre el peso del lote, el precio final asignado y el margen de puja obtenido.")
+    
     k_sel = st.slider("Número de perfiles (K)", 2, 6, 3)
     
     cols = ["Cant.", "P.Prom", "$Base", "$Final"]
     d = df[cols].copy().dropna()
     d["Margen_Puja"] = d["$Final"] - d["$Base"]
+    
+    # Modelo K-Means
     X = d[["P.Prom", "$Final", "Margen_Puja"]]
-    X_scaled = StandardScaler().fit_transform(X)
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
     modelo = KMeans(n_clusters=k_sel, random_state=10, n_init=10).fit(X_scaled)
     d["Perfil_ID"] = modelo.labels_
 
+    # Gráfico Scatter Plot
     fig = px.scatter(
-        d, x="P.Prom", y="$Final", color=d["Perfil_ID"].astype(str),
-        labels={"P.Prom": "Peso Promedio (Kg)", "$Final": "Precio Final ($/Kg)", "color": "Perfil"}
+        d, 
+        x="P.Prom", 
+        y="$Final", 
+        color=d["Perfil_ID"].astype(str),
+        labels={"P.Prom": "Peso Promedio (Kg)", "$Final": "Precio Final ($/Kg)", "color": "Perfil ID"},
+        title="Agrupación de Lotes por Perfil de Compra"
     )
     fig = aplicar_estilo_grafico(fig)
     st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown("---")
+    st.markdown("### 📋 Caracterización y Perfilamiento de Compradores")
+
+    # Resumen estadístico por perfil
+    resumen_clusters = d.groupby("Perfil_ID").agg(
+        Lotes_Comprados=("P.Prom", "count"),
+        Peso_Promedio=("P.Prom", "mean"),
+        Precio_Promedio=("$Final", "mean"),
+        Margen_Puja_Promedio=("Margen_Puja", "mean")
+    ).reset_index()
+
+    # Mostrar Tarjetas Descriptivas para cada Perfil
+    cols_perfiles = st.columns(min(k_sel, 3))
+    
+    for idx, row in resumen_clusters.iterrows():
+        col_idx = idx % min(k_sel, 3)
+        with cols_perfiles[col_idx]:
+            p_id = int(row["Perfil_ID"])
+            peso = row["Peso_Promedio"]
+            precio = row["Precio_Promedio"]
+            margen = row["Margen_Puja_Promedio"]
+            lotes = int(row["Lotes_Comprados"])
+
+            # Etiquetado automático del perfil según características
+            if peso > 350:
+                tag_perfil = "🐄 Compradores de Ceba / Pesados"
+            elif precio > d["$Final"].quantile(0.66):
+                tag_perfil = "💎 Compradores de Alta Valoración"
+            else:
+                tag_perfil = "🌾 Compradores de Levante / Livianos"
+
+            st.markdown(f"""
+            <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 5px solid #003399; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                <h4 style="margin: 0; color: #003399;">Perfil {p_id}</h4>
+                <p style="font-weight: 700; color: #008037; margin: 4px 0 10px 0;">{tag_perfil}</p>
+                <ul style="padding-left: 18px; margin: 0; font-size: 0.88rem; color: #334155;">
+                    <li><b>Lotes adjudicados:</b> {lotes:,}</li>
+                    <li><b>Peso prom. lote:</b> {peso:.1f} Kg</li>
+                    <li><b>Precio prom. pagado:</b> ${precio:,.0f} /Kg</li>
+                    <li><b>Margen de puja prom.:</b> ${margen:,.0f}</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # Tabla global comparativa
+    with st.expander("📊 Ver Tabla Detallada de Métricas por Perfil"):
+        st.dataframe(
+            resumen_clusters.style.format({
+                "Peso_Promedio": "{:.1f} Kg",
+                "Precio_Promedio": "${:,.0f}",
+                "Margen_Puja_Promedio": "${:,.0f}",
+                "Lotes_Comprados": "{:,}"
+            }),
+            use_container_width=True
+        )
 
 # =========================================================
 # FOOTER INSTITUCIONAL REPLICADO
