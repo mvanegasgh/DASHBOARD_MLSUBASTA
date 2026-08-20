@@ -237,6 +237,7 @@ def cargar_datos(path="data.csv"):
     df["$Final"] = pd.to_numeric(df["$Final"], errors="coerce")
     df["Procedencia"] = df["Procedencia"].fillna("Desconocida").str.strip()
     df["Fecha_TS"] = pd.to_datetime(df["Fecha"], dayfirst=True, errors="coerce")
+    df["Hora_Num"] = pd.to_numeric(df["Entrada"].astype(str).str.split(":").str[0], errors="coerce")
     df["Hora_Entrada"] = df["Entrada"].astype(str).str.split(":").str[0].str.zfill(2)
     df["Margen_Puja"] = df["$Final"] - df["$Base"]
     df["Hubo_Puja"] = (df["$Final"] > df["$Base"]).astype(int)
@@ -426,13 +427,15 @@ elif selected_tab == "Exploración":
         st.plotly_chart(fig3, use_container_width=True)
 
 # ---------------------------------------------------------
-# TAB 3: CORRELACIÓN
+# TAB 3: CORRELACIÓN (AMPLIADA)
 # ---------------------------------------------------------
 elif selected_tab == "Correlación":
-    st.markdown("### 📊 Matriz de Correlación Completa (Heatmap)")
+    st.markdown("### 📊 Matriz de Correlación Multivariable (Heatmap)")
     
-    # 1. Mapa de Calor (Heatmap) de variables numéricas directas
-    cols_heatmap = ["$Final", "$Base", "P.Prom", "Cant.", "Margen_Puja"]
+    # Selección extendida de variables cuantitativas
+    cols_heatmap = ["$Final", "$Base", "P.Prom", "Cant.", "Margen_Puja", "Hubo_Puja", "Hora_Num"]
+    labels_heatmap = ["Precio Final", "Precio Base", "Peso Prom.", "Cantidad", "Margen Puja", "Hubo Puja", "Hora Entrada"]
+    
     corr_matrix = df[cols_heatmap].corr(numeric_only=True)
 
     fig_heatmap = px.imshow(
@@ -440,17 +443,17 @@ elif selected_tab == "Correlación":
         text_auto=".2f",
         color_continuous_scale=["#E11D48", "#F8FAFC", "#008037"],
         labels=dict(color="Correlación"),
-        x=["Precio Final", "Precio Base", "Peso Prom.", "Cantidad", "Margen Puja"],
-        y=["Precio Final", "Precio Base", "Peso Prom.", "Cantidad", "Margen Puja"]
+        x=labels_heatmap,
+        y=labels_heatmap
     )
-    fig_heatmap.update_layout(height=450)
+    fig_heatmap.update_layout(height=580)
     fig_heatmap = aplicar_estilo_grafico(fig_heatmap)
     st.plotly_chart(fig_heatmap, use_container_width=True)
 
     st.markdown("---")
-    st.markdown("### 🎯 Correlación de Categorías y Variables vs. Precio Final")
+    st.markdown("### 🎯 Impacto por Categoría y Variable vs. Precio Final")
     
-    # 2. Gráfico de barras horizontales (Categorías Dummy)
+    # Gráfico de barras horizontales (Categorías Dummy + Variables)
     df_dummies = pd.get_dummies(df, columns=["Sexo"], drop_first=True)
     cols_num = ["Cant.", "P.Prom", "$Base", "$Final"] + [c for c in df_dummies.columns if c.startswith("Sexo_")]
     corr_obj = df_dummies[cols_num].corr(numeric_only=True)[["$Final"]].sort_values(by="$Final", ascending=False)
