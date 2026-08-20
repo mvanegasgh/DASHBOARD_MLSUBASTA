@@ -681,30 +681,32 @@ elif selected_tab == "Pronóstico":
         st.plotly_chart(fig, use_container_width=True)
 
 # ---------------------------------------------------------
-# TAB 6: PROBABILIDAD DE PUJA (DINÁMICO & INTERACTIVO)
+# TAB 6: PROBABILIDAD DE PUJA (DINÁMICO & INTERACTIVO EN TIEMPO REAL)
 # ---------------------------------------------------------
 elif selected_tab == "Prob. Puja":
     st.markdown("### 🎯 Simulador Interactivo y Clasificador de Probabilidad de Puja")
-    st.caption("Ajusta los parámetros del modelo y del lote para analizar la probabilidad de recibir pujas en tiempo real.")
+    st.caption("Ajusta los parámetros del modelo o los datos del lote para ver la actualización de probabilidades en tiempo real.")
 
     # --- CONTROLES INTERACTIVOS DEL MODELO ---
     col_ctrl1, col_ctrl2, col_ctrl3 = st.columns(3)
     with col_ctrl1:
-        max_depth_sel = st.slider("Profundidad máxima del Árbol", min_value=1, max_value=8, value=3, step=1)
+        max_depth_sel = st.slider("Profundidad máxima del Árbol", min_value=1, max_value=8, value=3, step=1, key="tree_depth")
     with col_ctrl2:
-        criterion_sel = st.selectbox("Criterio de división", options=["gini", "entropy"], format_func=lambda x: "Gini" if x == "gini" else "Entropía")
+        criterion_sel = st.selectbox("Criterio de división", options=["gini", "entropy"], format_func=lambda x: "Gini" if x == "gini" else "Entropía", key="tree_crit")
     with col_ctrl3:
-        min_samples_sel = st.slider("Mínimo de muestras por nodo", min_value=2, max_value=50, value=10, step=2)
+        min_samples_sel = st.slider("Mínimo de muestras por nodo", min_value=2, max_value=50, value=10, step=2, key="tree_samples")
 
-    # Preparación de Datos
-    cols_modelo = ["Cant.", "P.Prom", "Procedencia", "$Base", "Hubo_Puja"]
-    df_tree = df[cols_modelo].copy().dropna()
+    # Preparación de Datos limpia y consistente
+    cols_base = ["Cant.", "P.Prom", "$Base", "Procedencia", "Hubo_Puja"]
+    df_tree = df[cols_base].dropna().copy()
+
+    # Preprocesamiento One-Hot Encoding
     df_tree_encoded = pd.get_dummies(df_tree, columns=["Procedencia"], drop_first=True)
 
     X_tree = df_tree_encoded.drop(columns=["Hubo_Puja"])
     y_tree = df_tree_encoded["Hubo_Puja"]
 
-    # Entrenamiento dinámico del Árbol según controles
+    # Entrenamiento dinámico del Árbol
     X_tr_t, X_te_t, y_tr_t, y_te_t = train_test_split(X_tree, y_tree, test_size=0.2, random_state=42)
     modelo_arbol = DecisionTreeClassifier(
         max_depth=max_depth_sel,
@@ -715,37 +717,46 @@ elif selected_tab == "Prob. Puja":
     ).fit(X_tr_t, y_tr_t)
 
     acc_score = modelo_arbol.score(X_te_t, y_te_t) * 100
-    st.info(f"💡 **Precisión (Accuracy) del Modelo:** {acc_score:.1f}% con los parámetros actuales.")
+    st.info(f"💡 **Precisión (Accuracy) del Modelo:** {acc_score:.1f}% | Evaluado sobre {len(X_te_t)} lotes de prueba.")
 
     st.markdown("---")
 
-    # --- SIMULADOR EN TIEMPO REAL ---
-    st.markdown("#### 🧪 Simulador de Probabilidad por Lote")
-    col_sim1, col_sim2, col_sim3 = st.columns(3)
+    # --- CONTROLES INTERACTIVOS DEL LOTE A SIMULAR ---
+    st.markdown("#### 🧪 Simulador de Lote Específico")
+    col_sim1, col_sim2, col_sim3, col_sim4 = st.columns(4)
+
+    procedencias_unicas = sorted(df["Procedencia"].dropna().unique())
 
     with col_sim1:
-        peso_sim = st.slider("Peso Promedio del Lote (Kg)", 50, 600, 200)
+        peso_sim = st.slider("Peso Prom. (Kg)", 50, 600, 220, step=5, key="sim_peso")
     with col_sim2:
-        precio_base_sim = st.slider("Precio Base Sugerido ($/Kg)", 3000, 12000, 6000, step=100)
+        precio_base_sim = st.slider("Precio Base ($/Kg)", 3000, 12000, 5800, step=100, key="sim_base")
     with col_sim3:
-        cant_sim = st.number_input("Cantidad de Animales", 1, 40, 5)
+        cant_sim = st.number_input("Cantidad Animales", 1, 50, 5, step=1, key="sim_cant")
+    with col_sim4:
+        proc_sim = st.selectbox("Procedencia", options=procedencias_unicas, key="sim_proc")
 
-    # Construir dataframe de prueba para la predicción
-    sample_dict = {col: 0 for col in X_tree.columns}
-    sample_dict["P.Prom"] = peso_sim
-    sample_dict["$Base"] = precio_base_sim
-    sample_dict["Cant."] = cant_sim
-    sample_df = pd.DataFrame([sample_dict])
+    # Vectorización dinámica exacta respetando las columnas de entrenamiento
+    input_data = pd.DataFrame(0, index=[0], columns=X_tree.columns)
+    input_data.loc[0, "Cant."] = cant_sim
+    input_data.loc[0, "P.Prom"] = peso_sim
+    input_data.loc[0, "$Base"] = precio_base_sim
 
-    # Predecir probabilidades
-    probs = modelo_arbol.predict_proba(sample_df)[0]
-    prob_sin_puja, prob_con_puja = probs[0] * 100, probs[1] * 100
+    col_proc_match = f"Procedencia_{proc_sim}"
+    if col_proc_match in input_data.columns:
+        input_data.loc[0, col_proc_match] = 1
 
-    # Gráficos interactivos de respuesta en tiempo real
+    # Cálculo inmediato de Probabilidades
+    probs = modelo_arbol.predict_proba(input_data)[0]
+    # Comprobación de orden de clases (0: Sin Puja, 1: Con Puja)
+    clases = list(modelo_arbol.classes_)
+    idx_puja = clases.index(1) if 1 in clases else 1
+    prob_con_puja = probs[idx_puja] * 100
+
+    # Gráficos dinámicos
     col_g1, col_g2 = st.columns([1, 1])
 
     with col_g1:
-        # Gauge Chart (Medidor de probabilidad)
         fig_gauge = go.Figure(go.Indicator(
             mode="gauge+number",
             value=prob_con_puja,
@@ -768,27 +779,29 @@ elif selected_tab == "Prob. Puja":
         ))
         fig_gauge.update_layout(height=320)
         fig_gauge = aplicar_estilo_grafico(fig_gauge)
-        st.plotly_chart(fig_gauge, use_container_width=True)
+        st.plotly_chart(fig_gauge, use_container_width=True, key="gauge_plot")
 
     with col_g2:
-        # Importancia de Variables en Tiempo Real
         importancias = pd.DataFrame({
             "Variable": X_tree.columns,
             "Importancia": modelo_arbol.feature_importances_
         }).sort_values("Importancia", ascending=True).tail(8)
+
+        # Mapear nombres legibles
+        importancias["Variable"] = importancias["Variable"].str.replace("Procedencia_", "Proc: ")
 
         fig_imp = px.bar(
             importancias,
             x="Importancia",
             y="Variable",
             orientation="h",
-            title="Factores más determinantes según la configuración actual",
+            title="Variables Más Influyentes en la Puja",
             color="Importancia",
             color_continuous_scale=["#93C5FD", "#003399"]
         )
         fig_imp.update_layout(height=320, coloraxis_showscale=False)
         fig_imp = aplicar_estilo_grafico(fig_imp)
-        st.plotly_chart(fig_imp, use_container_width=True)
+        st.plotly_chart(fig_imp, use_container_width=True, key="imp_plot")
 
 # ---------------------------------------------------------
 # TAB 7: COMPRADORES (CLUSTERING)
