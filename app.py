@@ -29,16 +29,22 @@ st.set_page_config(
 )
 
 # =========================================================
-# ESTILOS CSS
+# ESTILOS CSS (CORREGIDO TIPOGRAFÍA E ÍCONOS)
 # =========================================================
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
+    /* Fondo general */
     html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stMain"] {
         background-color: #F8FAFC !important;
         color: #0F172A !important;
         font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+    }
+
+    /* Arreglo para que el botón de colapso de la barra lateral no renderice texto plano */
+    [data-testid="stSidebarCollapseButton"] * {
+        font-family: 'Material Symbols Outlined', 'Material Icons' !important;
     }
 
     h1, h2, h3, h4, h5, h6, p, span, label, input, button {
@@ -59,7 +65,7 @@ st.markdown("""
         width: 100%;
     }
     .suganorte-banner-body {
-        padding: 20px 28px;
+        padding: 24px 32px;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -68,15 +74,15 @@ st.markdown("""
     .suganorte-title {
         color: #FFFFFF !important;
         margin: 0 !important;
-        font-size: 1.65rem !important;
+        font-size: 1.75rem !important;
         font-weight: 800 !important;
         letter-spacing: -0.02em;
     }
     .suganorte-subtitle {
         color: #FFD100 !important;
-        margin-top: 4px !important;
+        margin-top: 6px !important;
         margin-bottom: 0 !important;
-        font-size: 0.9rem !important;
+        font-size: 0.95rem !important;
         font-weight: 600 !important;
     }
 
@@ -192,17 +198,17 @@ def etiqueta_sexo(codigo: str) -> str:
 # SIDEBAR
 # =========================================================
 st.sidebar.markdown("""
-<div style="padding: 10px 0;">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 90" width="100%">
-      <path d="M 10,55 Q 25,15 40,55 T 70,55" fill="none" stroke="#008037" stroke-width="7" stroke-linecap="round"/>
-      <text x="15" y="65" font-family="sans-serif" font-weight="900" font-size="44" fill="#0B2265">Suganorte</text>
-      <text x="285" y="65" font-family="sans-serif" font-weight="800" font-size="34" fill="#0B2265">S.A.</text>
-      <rect x="15" y="74" width="60" height="5" fill="#FFD100"/>
-      <rect x="75" y="74" width="60" height="5" fill="#008037"/>
-      <rect x="135" y="74" width="30" height="5" fill="#E11D48"/>
-      <g transform="translate(345, 18) rotate(20)">
-        <rect x="0" y="0" width="10" height="30" rx="2" fill="#1E293B"/>
-        <rect x="-6" y="-8" width="22" height="12" rx="2" fill="#1E293B"/>
+<div style="padding: 10px 0; text-align: center;">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 70" width="100%" style="max-width: 260px;">
+      <path d="M 10,35 Q 25,5 40,35 T 70,35" fill="none" stroke="#008037" stroke-width="6" stroke-linecap="round"/>
+      <text x="10" y="48" font-family="'Inter', sans-serif" font-weight="900" font-size="32" fill="#0B2265" letter-spacing="-1">Suganorte</text>
+      <text x="215" y="48" font-family="'Inter', sans-serif" font-weight="800" font-size="22" fill="#0B2265">S.A.</text>
+      <rect x="10" y="58" width="50" height="4" fill="#FFD100"/>
+      <rect x="60" y="58" width="50" height="4" fill="#008037"/>
+      <rect x="110" y="58" width="25" height="4" fill="#E11D48"/>
+      <g transform="translate(265, 12) rotate(25)">
+        <rect x="0" y="0" width="7" height="24" rx="2" fill="#0B2265"/>
+        <rect x="-5" y="-6" width="17" height="10" rx="2" fill="#0B2265"/>
       </g>
     </svg>
 </div>
@@ -259,14 +265,14 @@ st.markdown("""
             <h1 class="suganorte-title">Plataforma de Analítica Predictiva</h1>
             <p class="suganorte-subtitle">Subasta Ganadera Suganorte S.A. · Histórico & Pronósticos</p>
         </div>
-        <div style="width: 220px;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80" width="100%">
-              <path d="M 10,50 Q 25,10 40,50 T 70,50" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/>
-              <text x="15" y="60" font-family="sans-serif" font-weight="900" font-size="42" fill="#FFFFFF">Suganorte</text>
-              <text x="270" y="60" font-family="sans-serif" font-weight="800" font-size="32" fill="#FFFFFF">S.A.</text>
-              <g transform="translate(325, 12) rotate(20)">
-                <rect x="0" y="0" width="10" height="28" rx="2" fill="#FFFFFF"/>
-                <rect x="-6" y="-8" width="22" height="12" rx="2" fill="#FFFFFF"/>
+        <div style="width: 240px; flex-shrink: 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 60" width="100%">
+              <path d="M 10,30 Q 25,5 40,30 T 70,30" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
+              <text x="10" y="42" font-family="'Inter', sans-serif" font-weight="900" font-size="30" fill="#FFFFFF" letter-spacing="-1">Suganorte</text>
+              <text x="205" y="42" font-family="'Inter', sans-serif" font-weight="800" font-size="22" fill="#FFFFFF">S.A.</text>
+              <g transform="translate(255, 10) rotate(25)">
+                <rect x="0" y="0" width="7" height="22" rx="2" fill="#FFFFFF"/>
+                <rect x="-5" y="-5" width="17" height="9" rx="2" fill="#FFFFFF"/>
               </g>
             </svg>
         </div>
