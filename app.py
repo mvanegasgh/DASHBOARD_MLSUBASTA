@@ -213,9 +213,7 @@ st.markdown("""
         background-color: #006028 !important;
     }
 
-    /* =========================================================
-       ESTILOS DEL FOOTER OFICIAL SUGANORTE S.A.
-       ========================================================= */
+    /* ESTILOS DEL FOOTER OFICIAL SUGANORTE S.A. */
     .suganorte-footer-container {
         background-color: #003399;
         border-top: 5px solid #008037;
@@ -712,59 +710,53 @@ elif selected_tab == "Compradores":
     st.plotly_chart(fig, use_container_width=True)
 
 # =========================================================
-# FOOTER INSTITUCIONAL REPLICADO
+# FOOTER INSTITUCIONAL REPLICADO (HTML SINTAXIS PLANA)
 # =========================================================
-st.markdown("""
+html_footer = """
 <div class="suganorte-footer-container">
-    <div class="suganorte-footer-grid">
-        <!-- Columna 1: Marca & Redes -->
-        <div class="footer-col-brand">
-            <div class="footer-logo-title">Suganorte S.A.</div>
-            <div class="footer-logo-sub">Líderes en comercialización ganadera en el Suroccidente</div>
-            <div class="follow-text">Síguenos en</div>
-            <div class="footer-social-icons">
-                <a href="#" class="footer-social-icon" title="Instagram">📷</a>
-                <a href="#" class="footer-social-icon" title="Facebook">f</a>
-                <a href="#" class="footer-social-icon" title="YouTube">▶</a>
-            </div>
-        </div>
-
-        <!-- Columna 2: Información -->
-        <div>
-            <div class="footer-title">Información</div>
-            <ul class="footer-links">
-                <li><span class="arrow">❯</span> Nosotros</li>
-                <li><span class="arrow">❯</span> Precios</li>
-                <li><span class="arrow">❯</span> Políticas</li>
-                <li><span class="arrow">❯</span> Reglamentos de la Subasta</li>
-            </ul>
-        </div>
-
-        <!-- Columna 3: Servicios -->
-        <div>
-            <div class="footer-title">Servicios</div>
-            <ul class="footer-links">
-                <li><span class="arrow">❯</span> Subastas Comerciales Tradicionales</li>
-                <li><span class="arrow">❯</span> Subastas Adicionales</li>
-                <li><span class="arrow">❯</span> Remates Especializados en Fincas</li>
-                <li><span class="arrow">❯</span> Ventas Directas en Fincas</li>
-            </ul>
-        </div>
-
-        <!-- Columna 4: Contáctenos -->
-        <div>
-            <div class="footer-title">Contáctenos</div>
-            <div class="footer-contact-info">
-                <p>- Km 3 Vía Zarzal - Cartago (3.25Km)</p>
-                <p>- <strong>WhatsApp / Celulares:</strong> 317 636 06 69<br>317 430 71 38 - 317 432 13 70</p>
-                <p>- <strong>Email:</strong> gerencia@suganorte.com.co</p>
-                <p><strong>Zarzal - Valle del Cauca</strong></p>
-            </div>
-        </div>
-    </div>
-
-    <div class="footer-bottom-bar">
-        Proyecto de Analítica Predictiva — Subasta Ganadera Suganorte S.A. | Integrantes: Jeferson Balcazar Gomez, Carlos Arturo Agudelo Garcia, Milton Vanegas Delgado.
-    </div>
+<div class="suganorte-footer-grid">
+<div class="footer-col-brand">
+<div class="footer-logo-title">Suganorte S.A.</div>
+<div class="footer-logo-sub">Líderes en comercialización ganadera en el Suroccidente</div>
+<div class="follow-text">Síguenos en</div>
+<div class="footer-social-icons">
+<a href="#" class="footer-social-icon" title="Instagram">📷</a>
+<a href="#" class="footer-social-icon" title="Facebook">f</a>
+<a href="#" class="footer-social-icon" title="YouTube">▶</a>
 </div>
-""", unsafe_allow_html=True)
+</div>
+<div>
+<div class="footer-title">Información</div>
+<ul class="footer-links">
+<li><span class="arrow">❯</span> Nosotros</li>
+<li><span class="arrow">❯</span> Precios</li>
+<li><span class="arrow">❯</span> Políticas</li>
+<li><span class="arrow">❯</span> Reglamentos de la Subasta</li>
+</ul>
+</div>
+<div>
+<div class="footer-title">Servicios</div>
+<ul class="footer-links">
+<li><span class="arrow">❯</span> Subastas Comerciales Tradicionales</li>
+<li><span class="arrow">❯</span> Subastas Adicionales</li>
+<li><span class="arrow">❯</span> Remates Especializados en Fincas</li>
+<li><span class="arrow">❯</span> Ventas Directas en Fincas</li>
+</ul>
+</div>
+<div>
+<div class="footer-title">Contáctenos</div>
+<div class="footer-contact-info">
+<p>- Km 3 Vía Zarzal - Cartago (3.25Km)</p>
+<p>- <strong>WhatsApp / Celulares:</strong> 317 636 06 69<br>317 430 71 38 - 317 432 13 70</p>
+<p>- <strong>Email:</strong> gerencia@suganorte.com.co</p>
+<p><strong>Zarzal - Valle del Cauca</strong></p>
+</div>
+</div>
+</div>
+<div class="footer-bottom-bar">
+Proyecto de Analítica Predictiva — Subasta Ganadera Suganorte S.A. | Integrantes: Jeferson Balcazar Gomez, Carlos Arturo Agudelo Garcia, Milton Vanegas Delgado.
+</div>
+</div>
+"""
+
+st.markdown(html_footer, unsafe_allow_html=True)
