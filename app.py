@@ -29,44 +29,12 @@ st.set_page_config(
 )
 
 # =========================================================
-# RECURSOS DE MARCA (LOGOS EN SVG VECTORIAL SEGURO)
-# =========================================================
-LOGO_COLOR_SVG = """
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 110" width="100%">
-  <path d="M 10,70 Q 25,20 40,70 T 70,70" fill="none" stroke="#008037" stroke-width="8" stroke-linecap="round"/>
-  <text x="15" y="85" font-family="'Inter', sans-serif" font-weight="900" font-size="52" fill="#0B2265" letter-spacing="-2">Suganorte</text>
-  <text x="325" y="85" font-family="'Inter', sans-serif" font-weight="800" font-size="42" fill="#0B2265">S.A.</text>
-  <rect x="15" y="94" width="70" height="6" fill="#FFD100"/>
-  <rect x="85" y="94" width="70" height="6" fill="#008037"/>
-  <rect x="155" y="94" width="40" height="6" fill="#E11D48"/>
-  <text x="15" y="108" font-family="'Inter', sans-serif" font-weight="600" font-size="11" fill="#008037">Líderes en comercialización ganadera en el Suroccidente</text>
-  <g transform="translate(390, 25) rotate(25)">
-    <rect x="0" y="0" width="12" height="35" rx="3" fill="#1E293B"/>
-    <rect x="-8" y="-10" width="28" height="14" rx="2" fill="#1E293B"/>
-  </g>
-</svg>
-"""
-
-LOGO_WHITE_SVG = """
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 110" height="60">
-  <path d="M 10,70 Q 25,20 40,70 T 70,70" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
-  <text x="15" y="85" font-family="'Inter', sans-serif" font-weight="900" font-size="52" fill="#FFFFFF" letter-spacing="-2">Suganorte</text>
-  <text x="325" y="85" font-family="'Inter', sans-serif" font-weight="800" font-size="42" fill="#FFFFFF">S.A.</text>
-  <g transform="translate(390, 25) rotate(25)">
-    <rect x="0" y="0" width="12" height="35" rx="3" fill="#FFFFFF"/>
-    <rect x="-8" y="-10" width="28" height="14" rx="2" fill="#FFFFFF"/>
-  </g>
-</svg>
-"""
-
-# =========================================================
-# ESTILOS CSS AGRESIVOS (SOBREESCRIBEN EL TEMA DE STREAMLIT)
+# ESTILOS CSS
 # =========================================================
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-    /* LIMPIEZA TOTAL DE FONDOS Y TEMA ANTERIOR */
     html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stMain"] {
         background-color: #F8FAFC !important;
         color: #0F172A !important;
@@ -118,7 +86,7 @@ st.markdown("""
         border-right: 1px solid #E2E8F0 !important;
     }
 
-    /* REMOVER TONOS BEIGE/CREMA DE COMPONENTES NATIVOS */
+    /* COMPONENTES DE ENTRADA */
     div[data-baseweb="select"] > div, 
     div[data-baseweb="input"] > div,
     input, 
@@ -129,7 +97,7 @@ st.markdown("""
         border-radius: 8px !important;
     }
 
-    /* ETIQUETAS MULTISELECT EN AZUL REY */
+    /* TAGS MULTISELECT EN AZUL INSTITUCIONAL */
     span[data-baseweb="tag"] {
         background-color: #0B2265 !important;
         border-radius: 6px !important;
@@ -161,7 +129,7 @@ st.markdown("""
         font-weight: 800 !important;
     }
 
-    /* BOTONES Y SLIDERS */
+    /* BOTONES */
     .stButton>button {
         background-color: #008037 !important;
         color: #FFFFFF !important;
@@ -207,7 +175,7 @@ def cargar_datos(path="data.csv"):
 try:
     df_total = cargar_datos("data.csv")
 except Exception:
-    st.error("Error al cargar 'data.csv'. Verifica que se encuentre subido correctamente.")
+    st.error("Error al cargar 'data.csv'. Verifica que se encuentre en la raíz del proyecto.")
     st.stop()
 
 SEXO_LABELS = {
@@ -223,7 +191,23 @@ def etiqueta_sexo(codigo: str) -> str:
 # =========================================================
 # SIDEBAR
 # =========================================================
-st.sidebar.markdown(LOGO_COLOR_SVG, unsafe_allow_html=True)
+st.sidebar.markdown("""
+<div style="padding: 10px 0;">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 90" width="100%">
+      <path d="M 10,55 Q 25,15 40,55 T 70,55" fill="none" stroke="#008037" stroke-width="7" stroke-linecap="round"/>
+      <text x="15" y="65" font-family="sans-serif" font-weight="900" font-size="44" fill="#0B2265">Suganorte</text>
+      <text x="285" y="65" font-family="sans-serif" font-weight="800" font-size="34" fill="#0B2265">S.A.</text>
+      <rect x="15" y="74" width="60" height="5" fill="#FFD100"/>
+      <rect x="75" y="74" width="60" height="5" fill="#008037"/>
+      <rect x="135" y="74" width="30" height="5" fill="#E11D48"/>
+      <g transform="translate(345, 18) rotate(20)">
+        <rect x="0" y="0" width="10" height="30" rx="2" fill="#1E293B"/>
+        <rect x="-6" y="-8" width="22" height="12" rx="2" fill="#1E293B"/>
+      </g>
+    </svg>
+</div>
+""", unsafe_allow_html=True)
+
 st.sidebar.caption("Plataforma de Analítica Predictiva — Zarzal, Valle")
 st.sidebar.markdown("---")
 
@@ -265,9 +249,9 @@ if procedencias_sel:
 df = df_total[mask].copy()
 
 # =========================================================
-# BANNER PRINCIPAL (SINTAXIS HTML CORREGIDA)
+# BANNER PRINCIPAL
 # =========================================================
-st.markdown(f"""
+st.markdown("""
 <div class="suganorte-header-container">
     <div class="tricolor-stripe"></div>
     <div class="suganorte-banner-body">
@@ -275,8 +259,16 @@ st.markdown(f"""
             <h1 class="suganorte-title">Plataforma de Analítica Predictiva</h1>
             <p class="suganorte-subtitle">Subasta Ganadera Suganorte S.A. · Histórico & Pronósticos</p>
         </div>
-        <div>
-            {LOGO_WHITE_SVG}
+        <div style="width: 220px;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80" width="100%">
+              <path d="M 10,50 Q 25,10 40,50 T 70,50" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/>
+              <text x="15" y="60" font-family="sans-serif" font-weight="900" font-size="42" fill="#FFFFFF">Suganorte</text>
+              <text x="270" y="60" font-family="sans-serif" font-weight="800" font-size="32" fill="#FFFFFF">S.A.</text>
+              <g transform="translate(325, 12) rotate(20)">
+                <rect x="0" y="0" width="10" height="28" rx="2" fill="#FFFFFF"/>
+                <rect x="-6" y="-8" width="22" height="12" rx="2" fill="#FFFFFF"/>
+              </g>
+            </svg>
         </div>
     </div>
 </div>
@@ -304,7 +296,7 @@ selected_tab = option_menu(
 )
 
 # ---------------------------------------------------------
-# CONTENIDO DE PESTAÑAS
+# TAB 1: RESUMEN
 # ---------------------------------------------------------
 if selected_tab == "Resumen":
     c1, c2, c3, c4, c5 = st.columns(5)
@@ -322,6 +314,162 @@ if selected_tab == "Resumen":
     fig = aplicar_estilo_grafico(fig)
     st.plotly_chart(fig, use_container_width=True)
 
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.markdown("### Volumen por Categoría (Sexo)")
+        vol_sexo = df["Sexo"].value_counts().reset_index()
+        vol_sexo.columns = ["Sexo", "Lotes"]
+        vol_sexo["Etiqueta"] = vol_sexo["Sexo"].map(etiqueta_sexo)
+        fig2 = px.bar(vol_sexo, x="Lotes", y="Etiqueta", orientation="h")
+        fig2.update_layout(yaxis_title="")
+        fig2 = aplicar_estilo_grafico(fig2)
+        st.plotly_chart(fig2, use_container_width=True)
+    with col_b:
+        st.markdown("### Top 10 Procedencias por volumen")
+        vol_proc = df["Procedencia"].value_counts().head(10).reset_index()
+        vol_proc.columns = ["Procedencia", "Lotes"]
+        fig3 = px.bar(vol_proc, x="Lotes", y="Procedencia", orientation="h")
+        fig3.update_layout(yaxis_title="")
+        fig3 = aplicar_estilo_grafico(fig3)
+        st.plotly_chart(fig3, use_container_width=True)
+
+# ---------------------------------------------------------
+# TAB 2: EXPLORACIÓN
+# ---------------------------------------------------------
+elif selected_tab == "Exploración":
+    st.markdown("### Distribución general de precios")
+    fig = px.histogram(df, x="$Final", nbins=40)
+    promedio = df["$Final"].mean()
+    fig.add_vline(x=promedio, line_dash="dash", line_color="#E11D48",
+                  annotation_text=f"Promedio: ${promedio:,.0f}")
+    fig.update_layout(xaxis_title="Precio Final ($/Kg)", yaxis_title="Frecuencia")
+    fig = aplicar_estilo_grafico(fig)
+    st.plotly_chart(fig, use_container_width=True)
+
+    col1, col2 = st.columns(2)
+    top5 = df["Sexo"].value_counts().head(5).index
+    df_top5 = df[df["Sexo"].isin(top5)].copy()
+    df_top5["Etiqueta"] = df_top5["Sexo"].map(etiqueta_sexo)
+
+    with col1:
+        st.markdown("### Peso vs. Precio (Top 5 categorías)")
+        fig2 = px.scatter(df_top5, x="P.Prom", y="$Final", color="Etiqueta",
+                          opacity=0.6, trendline="ols",
+                          labels={"P.Prom": "Peso Promedio (Kg)", "$Final": "Precio Final ($/Kg)"})
+        fig2 = aplicar_estilo_grafico(fig2)
+        st.plotly_chart(fig2, use_container_width=True)
+
+    with col2:
+        st.markdown("### Rango de precios por categoría (Top 5)")
+        orden = df_top5.groupby("Etiqueta")["$Final"].median().sort_values(ascending=False).index
+        fig3 = px.box(df_top5, x="Etiqueta", y="$Final", color="Etiqueta",
+                      category_orders={"Etiqueta": list(orden)})
+        fig3.update_layout(showlegend=False, xaxis_title="Categoría", yaxis_title="Precio Final ($/Kg)")
+        fig3 = aplicar_estilo_grafico(fig3)
+        st.plotly_chart(fig3, use_container_width=True)
+
+# ---------------------------------------------------------
+# TAB 3: CORRELACIÓN
+# ---------------------------------------------------------
+elif selected_tab == "Correlación":
+    st.markdown("### Matriz de correlación contra el Precio Final")
+    df_dummies = pd.get_dummies(df, columns=["Sexo"], drop_first=True)
+    cols_num = ["Cant.", "P.Prom", "$Base", "$Final"] + [c for c in df_dummies.columns if c.startswith("Sexo_")]
+    corr_obj = df_dummies[cols_num].corr(numeric_only=True)[["$Final"]].sort_values(by="$Final", ascending=False)
+    corr_obj = corr_obj.drop(index="$Final")
+
+    fig = px.bar(corr_obj, x="$Final", y=corr_obj.index, orientation="h",
+                color="$Final", color_continuous_scale=["#E11D48", "#F8FAFC", "#008037"],
+                labels={"$Final": "Correlación con Precio Final", "y": "Variable"})
+    fig.update_layout(height=500)
+    fig = aplicar_estilo_grafico(fig)
+    st.plotly_chart(fig, use_container_width=True)
+
+# ---------------------------------------------------------
+# TAB 4: PREDICTOR
+# ---------------------------------------------------------
+elif selected_tab == "Predictor":
+    @st.cache_resource
+    def entrenar_modelos(df_in: pd.DataFrame):
+        d = df_in.copy()
+        d["Hora_Entrada"] = "Hora_" + d["Hora_Entrada"].astype(str)
+
+        X_simple = d[["P.Prom"]]
+        y = d["$Final"]
+        X_tr, X_te, y_tr, y_te = train_test_split(X_simple, y, test_size=0.2, random_state=42)
+        modelo_simple = LinearRegression().fit(X_tr, y_tr)
+        r2_simple = r2_score(y_te, modelo_simple.predict(X_te))
+
+        d_model = pd.get_dummies(d, columns=["Sexo", "Procedencia", "Hora_Entrada"], drop_first=True)
+        cols_sexo = [c for c in d_model.columns if c.startswith("Sexo_")]
+        cols_proc = [c for c in d_model.columns if c.startswith("Procedencia_")]
+        cols_hora = [c for c in d_model.columns if c.startswith("Hora_Entrada_")]
+        columnas_x = ["P.Prom", "Cant."] + cols_sexo + cols_proc + cols_hora
+
+        X_multi = d_model[columnas_x]
+        X_tr_m, X_te_m, y_tr_m, y_te_m = train_test_split(X_multi, y, test_size=0.2, random_state=42)
+        modelo_multi = LinearRegression().fit(X_tr_m, y_tr_m)
+        y_pred_m = modelo_multi.predict(X_te_m)
+        r2_multi = r2_score(y_te_m, y_pred_m)
+
+        return {
+            "modelo_simple": modelo_simple, "r2_simple": r2_simple,
+            "modelo_multi": modelo_multi, "r2_multi": r2_multi,
+            "columnas_x": columnas_x,
+            "sexos": sorted(d["Sexo"].unique()),
+            "procedencias": sorted(d["Procedencia"].unique()),
+            "horas": sorted(d["Hora_Entrada"].astype(str).unique()),
+        }
+
+    modelos = entrenar_modelos(df)
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("R² Regresión Simple", f"{modelos['r2_simple']*100:.1f}%")
+    c2.metric("R² Regresión Múltiple", f"{modelos['r2_multi']*100:.1f}%")
+    mejora = (modelos["r2_multi"] - modelos["r2_simple"]) / max(modelos["r2_simple"], 1e-6) * 100
+    c3.metric("Mejora vs. Simple", f"+{mejora:.0f}%")
+
+    st.markdown("---")
+    st.markdown("### 🧮 Calculator Predictor de Precio por Kilo")
+
+    colf1, colf2, colf3, colf4 = st.columns(4)
+    with colf1:
+        peso_in = st.number_input("Peso Promedio (Kg)", min_value=20, max_value=600, value=150, step=5)
+    with colf2:
+        cant_in = st.number_input("Cantidad de animales", min_value=1, max_value=50, value=3, step=1)
+    with colf3:
+        sexo_in = st.selectbox("Categoría (Sexo)", options=modelos["sexos"], format_func=etiqueta_sexo)
+    with colf4:
+        hora_in = st.selectbox("Hora de entrada", options=modelos["horas"])
+
+    procedencia_in = st.selectbox("Procedencia", options=modelos["procedencias"])
+
+    def predecir_precio(peso, cantidad, sexo, procedencia, hora):
+        datos_nuevos = {c: 0 for c in modelos["columnas_x"]}
+        datos_nuevos["P.Prom"] = peso
+        datos_nuevos["Cant."] = cantidad
+        col_sexo = f"Sexo_{sexo}"
+        if col_sexo in datos_nuevos:
+            datos_nuevos[col_sexo] = 1
+        col_proc = f"Procedencia_{procedencia}"
+        if col_proc in datos_nuevos:
+            datos_nuevos[col_proc] = 1
+        col_hora = f"Hora_Entrada_{hora}"
+        if col_hora in datos_nuevos:
+            datos_nuevos[col_hora] = 1
+        df_pred = pd.DataFrame([datos_nuevos])[modelos["columnas_x"]]
+        return modelos["modelo_multi"].predict(df_pred)[0]
+
+    if st.button("💰 Calcular precio estimado", type="primary"):
+        precio_est = predecir_precio(peso_in, cant_in, sexo_in, procedencia_in, hora_in)
+        valor_total = precio_est * peso_in
+        cA, cB = st.columns(2)
+        cA.metric("Precio estimado por Kg", f"${precio_est:,.0f}")
+        cB.metric("Valor estimado por animal", f"${valor_total:,.0f}")
+
+# ---------------------------------------------------------
+# TAB 5: PRONÓSTICO
+# ---------------------------------------------------------
 elif selected_tab == "Pronóstico":
     st.markdown("### Pronóstico de precio semanal (Holt-Winters)")
     df_ts = df_total.copy().set_index("Fecha_TS").sort_index()
@@ -342,6 +490,46 @@ elif selected_tab == "Pronóstico":
         fig.update_layout(xaxis_title="Semana", yaxis_title="Precio Final Promedio ($/Kg)")
         fig = aplicar_estilo_grafico(fig)
         st.plotly_chart(fig, use_container_width=True)
+
+# ---------------------------------------------------------
+# TAB 6: PROBABILIDAD DE PUJA
+# ---------------------------------------------------------
+elif selected_tab == "Prob. Puja":
+    st.markdown("### Clasificación de probabilidad de Puja (Árbol de Decisión)")
+    cols = ["Cant.", "P.Prom", "Procedencia", "$Base", "Hubo_Puja"]
+    d = df[cols].copy().dropna()
+    d = pd.get_dummies(d, columns=["Procedencia"], drop_first=True)
+    X = d.drop(columns=["Hubo_Puja"])
+    y = d["Hubo_Puja"]
+    X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.2, random_state=42)
+    modelo_arbol = DecisionTreeClassifier(max_depth=3, random_state=42, class_weight="balanced").fit(X_tr, y_tr)
+
+    fig, ax = plt.subplots(figsize=(14, 6))
+    plot_tree(modelo_arbol, feature_names=X.columns.tolist(), class_names=["Sin Puja", "Con Puja"],
+              filled=True, rounded=True, fontsize=8, ax=ax)
+    st.pyplot(fig)
+
+# ---------------------------------------------------------
+# TAB 7: COMPRADORES (CLUSTERING)
+# ---------------------------------------------------------
+elif selected_tab == "Compradores":
+    st.markdown("### Segmentación por comportamiento de compra (K-Means)")
+    k_sel = st.slider("Número de perfiles (K)", 2, 6, 3)
+    
+    cols = ["Cant.", "P.Prom", "$Base", "$Final"]
+    d = df[cols].copy().dropna()
+    d["Margen_Puja"] = d["$Final"] - d["$Base"]
+    X = d[["P.Prom", "$Final", "Margen_Puja"]]
+    X_scaled = StandardScaler().fit_transform(X)
+    modelo = KMeans(n_clusters=k_sel, random_state=10, n_init=10).fit(X_scaled)
+    d["Perfil_ID"] = modelo.labels_
+
+    fig = px.scatter(
+        d, x="P.Prom", y="$Final", color=d["Perfil_ID"].astype(str),
+        labels={"P.Prom": "Peso Promedio (Kg)", "$Final": "Precio Final ($/Kg)", "color": "Perfil"}
+    )
+    fig = aplicar_estilo_grafico(fig)
+    st.plotly_chart(fig, use_container_width=True)
 
 # FOOTER
 st.markdown("---")
