@@ -29,7 +29,7 @@ st.set_page_config(
 )
 
 # =========================================================
-# ESTILOS CSS CORREGIDOS (LOGOS EN HTML/CSS LIMPIO)
+# ESTILOS CSS INSTITUCIONALES Y FOOTER OFICIAL
 # =========================================================
 st.markdown("""
 <style>
@@ -42,7 +42,7 @@ st.markdown("""
         font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
     }
 
-    /* Solución definitiva para íconos nativos de Streamlit */
+    /* Ajuste para iconos nativos */
     [data-testid="stSidebarCollapseButton"] button span,
     [data-testid="stSidebarCollapseButton"] span {
         font-family: "Source Sans Pro", sans-serif, "Material Icons" !important;
@@ -211,6 +211,101 @@ st.markdown("""
     }
     .stButton>button:hover {
         background-color: #006028 !important;
+    }
+
+    /* =========================================================
+       ESTILOS DEL FOOTER OFICIAL SUGANORTE S.A.
+       ========================================================= */
+    .suganorte-footer-container {
+        background-color: #003399;
+        border-top: 5px solid #008037;
+        color: #FFFFFF;
+        padding: 40px 30px 20px 30px;
+        border-radius: 12px;
+        margin-top: 50px;
+        font-family: 'Inter', sans-serif;
+    }
+    .suganorte-footer-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr 1.2fr 1.5fr;
+        gap: 30px;
+    }
+    .footer-col-brand .footer-logo-title {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 900;
+        color: #FFFFFF;
+        margin-bottom: 2px;
+    }
+    .footer-col-brand .footer-logo-sub {
+        font-size: 0.72rem;
+        color: #E2E8F0;
+        margin-bottom: 20px;
+        letter-spacing: 0.5px;
+    }
+    .footer-col-brand .follow-text {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 12px;
+    }
+    .footer-social-icons {
+        display: flex;
+        gap: 12px;
+    }
+    .footer-social-icon {
+        width: 38px;
+        height: 38px;
+        background-color: #FFFFFF;
+        color: #003399;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.1rem;
+        text-decoration: none;
+    }
+    .footer-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 18px;
+        color: #FFFFFF;
+    }
+    .footer-links {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .footer-links li {
+        margin-bottom: 10px;
+        font-size: 0.9rem;
+        color: #F1F5F9;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .footer-links li span.arrow {
+        font-size: 0.8rem;
+        opacity: 0.8;
+    }
+    .footer-contact-info {
+        font-size: 0.9rem;
+        line-height: 1.6;
+        color: #F1F5F9;
+    }
+    .footer-contact-info p {
+        margin-bottom: 8px;
+    }
+    .footer-contact-info strong {
+        color: #FFFFFF;
+    }
+    .footer-bottom-bar {
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+        margin-top: 30px;
+        padding-top: 15px;
+        text-align: center;
+        font-size: 0.8rem;
+        color: #94A3B8;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -427,12 +522,11 @@ elif selected_tab == "Exploración":
         st.plotly_chart(fig3, use_container_width=True)
 
 # ---------------------------------------------------------
-# TAB 3: CORRELACIÓN (AMPLIADA)
+# TAB 3: CORRELACIÓN
 # ---------------------------------------------------------
 elif selected_tab == "Correlación":
     st.markdown("### 📊 Matriz de Correlación Multivariable (Heatmap)")
     
-    # Selección extendida de variables cuantitativas
     cols_heatmap = ["$Final", "$Base", "P.Prom", "Cant.", "Margen_Puja", "Hubo_Puja", "Hora_Num"]
     labels_heatmap = ["Precio Final", "Precio Base", "Peso Prom.", "Cantidad", "Margen Puja", "Hubo Puja", "Hora Entrada"]
     
@@ -453,7 +547,6 @@ elif selected_tab == "Correlación":
     st.markdown("---")
     st.markdown("### 🎯 Impacto por Categoría y Variable vs. Precio Final")
     
-    # Gráfico de barras horizontales (Categorías Dummy + Variables)
     df_dummies = pd.get_dummies(df, columns=["Sexo"], drop_first=True)
     cols_num = ["Cant.", "P.Prom", "$Base", "$Final"] + [c for c in df_dummies.columns if c.startswith("Sexo_")]
     corr_obj = df_dummies[cols_num].corr(numeric_only=True)[["$Final"]].sort_values(by="$Final", ascending=False)
@@ -618,9 +711,60 @@ elif selected_tab == "Compradores":
     fig = aplicar_estilo_grafico(fig)
     st.plotly_chart(fig, use_container_width=True)
 
-# FOOTER
-st.markdown("---")
-st.caption(
-    "Proyecto de Analítica Predictiva — Suganorte S.A. (Zarzal, Valle) · "
-    "Integrantes: Jeferson Balcazar Gomez, Carlos Arturo Agudelo Garcia, Milton Vanegas Delgado."
-)
+# =========================================================
+# FOOTER INSTITUCIONAL REPLICADO
+# =========================================================
+st.markdown("""
+<div class="suganorte-footer-container">
+    <div class="suganorte-footer-grid">
+        <!-- Columna 1: Marca & Redes -->
+        <div class="footer-col-brand">
+            <div class="footer-logo-title">Suganorte S.A.</div>
+            <div class="footer-logo-sub">Líderes en comercialización ganadera en el Suroccidente</div>
+            <div class="follow-text">Síguenos en</div>
+            <div class="footer-social-icons">
+                <a href="#" class="footer-social-icon" title="Instagram">📷</a>
+                <a href="#" class="footer-social-icon" title="Facebook">f</a>
+                <a href="#" class="footer-social-icon" title="YouTube">▶</a>
+            </div>
+        </div>
+
+        <!-- Columna 2: Información -->
+        <div>
+            <div class="footer-title">Información</div>
+            <ul class="footer-links">
+                <li><span class="arrow">❯</span> Nosotros</li>
+                <li><span class="arrow">❯</span> Precios</li>
+                <li><span class="arrow">❯</span> Políticas</li>
+                <li><span class="arrow">❯</span> Reglamentos de la Subasta</li>
+            </ul>
+        </div>
+
+        <!-- Columna 3: Servicios -->
+        <div>
+            <div class="footer-title">Servicios</div>
+            <ul class="footer-links">
+                <li><span class="arrow">❯</span> Subastas Comerciales Tradicionales</li>
+                <li><span class="arrow">❯</span> Subastas Adicionales</li>
+                <li><span class="arrow">❯</span> Remates Especializados en Fincas</li>
+                <li><span class="arrow">❯</span> Ventas Directas en Fincas</li>
+            </ul>
+        </div>
+
+        <!-- Columna 4: Contáctenos -->
+        <div>
+            <div class="footer-title">Contáctenos</div>
+            <div class="footer-contact-info">
+                <p>- Km 3 Vía Zarzal - Cartago (3.25Km)</p>
+                <p>- <strong>WhatsApp / Celulares:</strong> 317 636 06 69<br>317 430 71 38 - 317 432 13 70</p>
+                <p>- <strong>Email:</strong> gerencia@suganorte.com.co</p>
+                <p><strong>Zarzal - Valle del Cauca</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-bottom-bar">
+        Proyecto de Analítica Predictiva — Subasta Ganadera Suganorte S.A. | Integrantes: Jeferson Balcazar Gomez, Carlos Arturo Agudelo Garcia, Milton Vanegas Delgado.
+    </div>
+</div>
+""", unsafe_allow_html=True)
