@@ -29,7 +29,7 @@ st.set_page_config(
 )
 
 # =========================================================
-# ESTILOS CSS INSTITUCIONALES Y FOOTER OFICIAL
+# ESTILOS CSS INSTITUCIONALES UNIFICADOS
 # =========================================================
 st.markdown("""
 <style>
@@ -60,7 +60,7 @@ st.markdown("""
         font-family: 'Montserrat', sans-serif;
         font-weight: 900;
         font-size: 1.65rem;
-        color: #0B2265;
+        color: #003399;
         letter-spacing: -0.8px;
         line-height: 1;
     }
@@ -68,7 +68,7 @@ st.markdown("""
         font-family: 'Montserrat', sans-serif;
         font-weight: 800;
         font-size: 1.1rem;
-        color: #0B2265;
+        color: #003399;
         position: relative;
     }
     .brand-sa::after {
@@ -91,11 +91,11 @@ st.markdown("""
 
     /* BANNER HEADER HTML */
     .suganorte-header-container {
-        background: #0B2265;
+        background: #003399;
         border-radius: 12px;
         overflow: hidden;
         margin-bottom: 24px;
-        box-shadow: 0 4px 15px rgba(11, 34, 101, 0.15);
+        box-shadow: 0 4px 15px rgba(0, 51, 153, 0.2);
     }
     .tricolor-stripe {
         height: 6px;
@@ -170,7 +170,7 @@ st.markdown("""
 
     /* TAGS MULTISELECT EN AZUL INSTITUCIONAL */
     span[data-baseweb="tag"] {
-        background-color: #0B2265 !important;
+        background-color: #003399 !important;
         border-radius: 6px !important;
         border: none !important;
     }
@@ -195,7 +195,7 @@ st.markdown("""
         text-transform: uppercase;
     }
     div[data-testid="stMetricValue"] {
-        color: #0B2265 !important;
+        color: #003399 !important;
         font-size: 1.8rem !important;
         font-weight: 800 !important;
     }
@@ -308,7 +308,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-theme_colors = ["#0B2265", "#008037", "#D97706", "#2563EB", "#059669"]
+theme_colors = ["#003399", "#008037", "#D97706", "#2563EB", "#059669"]
 
 def aplicar_estilo_grafico(fig):
     fig.update_layout(
@@ -440,9 +440,9 @@ selected_tab = option_menu(
     orientation="horizontal",
     styles={
         "container": {"padding": "6px!important", "background-color": "#FFFFFF", "border-radius": "10px", "border": "1px solid #E2E8F0"},
-        "icon": {"color": "#0B2265", "font-size": "14px"},
+        "icon": {"color": "#003399", "font-size": "14px"},
         "nav-link": {"font-size": "13px", "text-align": "center", "margin": "2px", "color": "#475569", "font-weight": "600", "border-radius": "6px"},
-        "nav-link-selected": {"background-color": "#0B2265", "color": "#FFFFFF", "font-weight": "700"},
+        "nav-link-selected": {"background-color": "#003399", "color": "#FFFFFF", "font-weight": "700"},
     }
 )
 
@@ -662,7 +662,7 @@ elif selected_tab == "Pronóstico":
 
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=precio_semanal.index, y=precio_semanal.values,
-                                 mode="lines+markers", name="Histórico", line=dict(color="#0B2265")))
+                                 mode="lines+markers", name="Histórico", line=dict(color="#003399")))
         fig.add_trace(go.Scatter(x=forecast_full.index, y=forecast_full.values,
                                  mode="lines+markers", name="Pronóstico", line=dict(dash="dash", color="#008037")))
         fig.update_layout(xaxis_title="Semana", yaxis_title="Precio Final Promedio ($/Kg)")
