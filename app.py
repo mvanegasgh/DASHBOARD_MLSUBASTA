@@ -1,7 +1,7 @@
 """
 Dashboard de Analítica Predictiva - Subasta Ganadera Suganorte S.A. (Zarzal, Valle)
 Interfaz Institucional Oficial alineada a la marca Suganorte S.A.
-Código Completo Integrado
+Código Completo Integrado con 3 Modelos Predictivos (RL Simple, RL Múltiple y Random Forest)
 """
 
 import numpy as np
@@ -491,7 +491,6 @@ selected_tab = option_menu(
 # TAB 1: RESUMEN (PORTADA EJECUTIVA DE IMPACTO)
 # ---------------------------------------------------------
 if selected_tab == "Resumen":
-    # Cálculos para Métricas Principales
     monto_total_comercializado = df["Monto_Lote"].sum()
     toneladas_totales = df["Peso_Total"].sum() / 1000
     precio_prom = df["$Final"].mean()
@@ -533,7 +532,6 @@ if selected_tab == "Resumen":
     top_cat_vol = df["Sexo"].mode()[0] if not df.empty else "N/A"
     top_proc_vol = df["Procedencia"].mode()[0] if not df.empty else "N/A"
     precio_max = df["$Final"].max()
-    lote_max_precio = df.loc[df["$Final"].idxmax()] if not df.empty else None
 
     st.markdown("### 🌟 Aspectos Clave del Mercado")
     
@@ -837,14 +835,27 @@ elif selected_tab == "Correlación":
     st.plotly_chart(fig_bar, use_container_width=True)
 
 # ---------------------------------------------------------
-# TAB 4: PREDICTOR COMPARATIVO CON GRÁFICOS DIAGNÓSTICOS
+# TAB 4: PREDICTOR COMPARATIVO (RL SIMPLE, RL MÚLTIPLE Y RANDOM FOREST)
 # ---------------------------------------------------------
 elif selected_tab == "Predictor":
     @st.cache_resource
     def entrenar_modelos(df_in: pd.DataFrame):
         d = df_in.copy()
         d["Hora_Entrada"] = "Hora_" + d["Hora_Entrada"].astype(str)
+        y = d["$Final"]
 
+        # 1. REGRESIÓN LINEAL SIMPLE (Baseline Univariable: Solo Peso Promedio)
+        X_simple = d[["P.Prom"]]
+        X_tr_s, X_te_s, y_tr_s, y_te_s = train_test_split(X_simple, y, test_size=0.2, random_state=42)
+        modelo_simple = LinearRegression().fit(X_tr_s, y_tr_s)
+        y_pred_s = modelo_simple.predict(X_te_s)
+        metricas_s = {
+            "R2": r2_score(y_te_s, y_pred_s),
+            "MAE": mean_absolute_error(y_te_s, y_pred_s),
+            "RMSE": np.sqrt(mean_squared_error(y_te_s, y_pred_s))
+        }
+
+        # Preparación variables Múltiples
         d_model = pd.get_dummies(d, columns=["Sexo", "Procedencia", "Hora_Entrada"], drop_first=True)
         cols_sexo = [c for c in d_model.columns if c.startswith("Sexo_")]
         cols_proc = [c for c in d_model.columns if c.startswith("Procedencia_")]
@@ -852,34 +863,35 @@ elif selected_tab == "Predictor":
         
         columnas_x = ["P.Prom", "Cant.", "Peso_Total", "Es_Lote_Multiple", "Mes", "Dia_Semana"] + cols_sexo + cols_proc + cols_hora
 
-        X = d_model[columnas_x]
-        y = d_model["$Final"]
+        X_multi = d_model[columnas_x]
+        X_tr_m, X_te_m, y_tr_m, y_te_m = train_test_split(X_multi, y, test_size=0.2, random_state=42)
 
-        X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.2, random_state=42)
-
-        # 1. Regresión Lineal Múltiple (Baseline)
-        modelo_lr = LinearRegression().fit(X_tr, y_tr)
-        y_pred_lr = modelo_lr.predict(X_te)
+        # 2. REGRESIÓN LINEAL MÚLTIPLE
+        modelo_lr = LinearRegression().fit(X_tr_m, y_tr_m)
+        y_pred_lr = modelo_lr.predict(X_te_m)
         metricas_lr = {
-            "R2": r2_score(y_te, y_pred_lr),
-            "MAE": mean_absolute_error(y_te, y_pred_lr),
-            "RMSE": np.sqrt(mean_squared_error(y_te, y_pred_lr))
+            "R2": r2_score(y_te_m, y_pred_lr),
+            "MAE": mean_absolute_error(y_te_m, y_pred_lr),
+            "RMSE": np.sqrt(mean_squared_error(y_te_m, y_pred_lr))
         }
 
-        # 2. Random Forest Regressor (Ensamble No Lineal)
-        modelo_rf = RandomForestRegressor(n_estimators=100, max_depth=12, random_state=42, n_jobs=-1).fit(X_tr, y_tr)
-        y_pred_rf = modelo_rf.predict(X_te)
+        # 3. RANDOM FOREST REGRESSOR (Ensamble No Lineal)
+        modelo_rf = RandomForestRegressor(n_estimators=100, max_depth=12, random_state=42, n_jobs=-1).fit(X_tr_m, y_tr_m)
+        y_pred_rf = modelo_rf.predict(X_te_m)
         metricas_rf = {
-            "R2": r2_score(y_te, y_pred_rf),
-            "MAE": mean_absolute_error(y_te, y_pred_rf),
-            "RMSE": np.sqrt(mean_squared_error(y_te, y_pred_rf))
+            "R2": r2_score(y_te_m, y_pred_rf),
+            "MAE": mean_absolute_error(y_te_m, y_pred_rf),
+            "RMSE": np.sqrt(mean_squared_error(y_te_m, y_pred_rf))
         }
 
         return {
+            "modelo_simple": modelo_simple, "metricas_s": metricas_s,
             "modelo_lr": modelo_lr, "metricas_lr": metricas_lr,
             "modelo_rf": modelo_rf, "metricas_rf": metricas_rf,
             "columnas_x": columnas_x,
-            "y_test": y_te,
+            "X_test_simple": X_te_s,
+            "y_test": y_te_m,
+            "y_pred_s": y_pred_s,
             "y_pred_lr": y_pred_lr,
             "y_pred_rf": y_pred_rf,
             "sexos": sorted(d["Sexo"].unique()),
@@ -888,44 +900,72 @@ elif selected_tab == "Predictor":
         }
 
     modelos = entrenar_modelos(df)
+    m_s = modelos["metricas_s"]
     m_lr = modelos["metricas_lr"]
     m_rf = modelos["metricas_rf"]
 
-    st.markdown("### 📊 Tabla Comparativa de Desempeño Técnico")
+    st.markdown("### 📊 Tabla Comparativa de Modelos Predictivos")
     
     df_comparativa = pd.DataFrame({
         "Métrica": ["R² (Varianza explicada)", "MAE (Error Absoluto Medio)", "RMSE (Sensibilidad a Outliers)"],
-        "Regresión Lineal (Baseline)": [f"{m_lr['R2']*100:.2f}%", f"${m_lr['MAE']:,.2f} /Kg", f"${m_lr['RMSE']:,.2f} /Kg"],
+        "RL Simple (Solo Peso)": [f"{m_s['R2']*100:.2f}%", f"${m_s['MAE']:,.2f} /Kg", f"${m_s['RMSE']:,.2f} /Kg"],
+        "RL Múltiple (Todas Vars)": [f"{m_lr['R2']*100:.2f}%", f"${m_lr['MAE']:,.2f} /Kg", f"${m_lr['RMSE']:,.2f} /Kg"],
         "Random Forest Regressor": [f"{m_rf['R2']*100:.2f}%", f"${m_rf['MAE']:,.2f} /Kg", f"${m_rf['RMSE']:,.2f} /Kg"],
-        "Diferencia / Ganancia": [
-            f"+{(m_rf['R2'] - m_lr['R2'])*100:+.2f}% pts",
-            f"${m_rf['MAE'] - m_lr['MAE']:,.2f} /Kg ({'Mejora' if m_rf['MAE'] < m_lr['MAE'] else 'Peor'})",
-            f"${m_rf['RMSE'] - m_lr['RMSE']:,.2f} /Kg ({'Mejora' if m_rf['RMSE'] < m_lr['RMSE'] else 'Peor'})"
+        "Ganancia RF vs RL Simple": [
+            f"+{(m_rf['R2'] - m_s['R2'])*100:+.2f}% pts",
+            f"${m_rf['MAE'] - m_s['MAE']:,.2f} /Kg",
+            f"${m_rf['RMSE'] - m_s['RMSE']:,.2f} /Kg"
         ]
     })
     st.table(df_comparativa)
 
     col1, col2, col3 = st.columns(3)
-    col1.metric("R² Random Forest", f"{m_rf['R2']*100:.1f}%", delta=f"{(m_rf['R2'] - m_lr['R2'])*100:+.1f}% pts vs LR")
-    col2.metric("MAE (Error Promedio)", f"${m_rf['MAE']:,.0f}", delta=f"${m_rf['MAE'] - m_lr['MAE']:,.0f}", delta_color="inverse")
-    col3.metric("RMSE (Penalización Outliers)", f"${m_rf['RMSE']:,.0f}", delta=f"${m_rf['RMSE'] - m_lr['RMSE']:,.0f}", delta_color="inverse")
+    col1.metric("R² RL Simple (Baseline)", f"{m_s['R2']*100:.1f}%")
+    col2.metric("R² RL Múltiple", f"{m_lr['R2']*100:.1f}%", delta=f"{(m_lr['R2'] - m_s['R2'])*100:+.1f}% pts vs Simple")
+    col3.metric("R² Random Forest", f"{m_rf['R2']*100:.1f}%", delta=f"{(m_rf['R2'] - m_s['R2'])*100:+.1f}% pts vs Simple")
 
     st.markdown("---")
 
-    # --- SECCIÓN DE GRÁFICOS DIAGNÓSTICOS DE LOS MODELOS ---
-    st.markdown("### 📈 Evaluador Gráfico: Regresión Lineal vs. Random Forest")
-    st.caption("Comparativa de ajuste directo entre valores reales y predichos junto a la distribución del error de predicción.")
+    # --- GRÁFICO 1: RECTA DE REGRESIÓN LINEAL SIMPLE ---
+    st.markdown("### 📉 Regresión Lineal Simple: Peso Promedio vs. Precio Final")
+    st.caption("Ajuste univariable básico que proyecta el precio únicamente a partir del peso del lote.")
+
+    x_linea = np.linspace(df["P.Prom"].min(), df["P.Prom"].max(), 100)
+    y_linea = modelos["modelo_simple"].predict(x_linea.reshape(-1, 1))
+
+    fig_simple = go.Figure()
+    fig_simple.add_trace(go.Scatter(
+        x=df["P.Prom"], y=df["$Final"],
+        mode='markers', name='Datos Reales',
+        marker=dict(color='#003399', opacity=0.3, size=5)
+    ))
+    fig_simple.add_trace(go.Scatter(
+        x=x_linea, y=y_linea,
+        mode='lines', name=f'Recta RL Simple (R²={m_s["R2"]*100:.1f}%)',
+        line=dict(color='#E11D48', width=3)
+    ))
+    fig_simple.update_layout(
+        xaxis_title="Peso Promedio (Kg)",
+        yaxis_title="Precio Final ($/Kg)"
+    )
+    st.plotly_chart(aplicar_estilo_grafico(fig_simple), use_container_width=True)
+
+    st.markdown("---")
+
+    # --- GRÁFICOS DIAGNÓSTICOS MULTIMODELO ---
+    st.markdown("### 📈 Evaluación Diagnóstica: RL Múltiple vs. Random Forest")
+    st.caption("Comparativa de ajuste directo entre valores reales y predichos junto a la distribución de errores.")
 
     df_eval = pd.DataFrame({
         "Real": modelos["y_test"],
-        "Regresión Lineal": modelos["y_pred_lr"],
+        "RL Múltiple": modelos["y_pred_lr"],
         "Random Forest": modelos["y_pred_rf"]
     })
 
     col_g1, col_g2 = st.columns(2)
 
     with col_g1:
-        st.markdown("#### 🎯 Val. Reales vs. Predichos (Ajuste)")
+        st.markdown("#### 🎯 Val. Reales vs. Predichos")
         fig_real_pred = go.Figure()
 
         min_val = min(df_eval["Real"].min(), df_eval["Random Forest"].min())
@@ -938,10 +978,10 @@ elif selected_tab == "Predictor":
             line=dict(color='#E11D48', dash='dash')
         ))
 
-        # Dispersión Regresión Lineal
+        # Dispersión RL Múltiple
         fig_real_pred.add_trace(go.Scatter(
-            x=df_eval["Real"], y=df_eval["Regresión Lineal"],
-            mode='markers', name='Regresión Lineal',
+            x=df_eval["Real"], y=df_eval["RL Múltiple"],
+            mode='markers', name='RL Múltiple',
             marker=dict(color='#2563EB', opacity=0.4, size=6)
         ))
 
@@ -960,12 +1000,12 @@ elif selected_tab == "Predictor":
 
     with col_g2:
         st.markdown("#### 📉 Distribución de Errores (Residuos)")
-        df_eval["Residuo_LR"] = df_eval["Real"] - df_eval["Regresión Lineal"]
+        df_eval["Residuo_LR"] = df_eval["Real"] - df_eval["RL Múltiple"]
         df_eval["Residuo_RF"] = df_eval["Real"] - df_eval["Random Forest"]
 
         fig_res = go.Figure()
         fig_res.add_trace(go.Histogram(
-            x=df_eval["Residuo_LR"], name="Errores Reg. Lineal",
+            x=df_eval["Residuo_LR"], name="Errores RL Múltiple",
             marker_color="#2563EB", opacity=0.5, nbinsx=35
         ))
         fig_res.add_trace(go.Histogram(
@@ -982,8 +1022,8 @@ elif selected_tab == "Predictor":
 
     st.markdown("---")
 
-    # --- CALCULADORA PREDICTIVA ---
-    st.markdown("### 🧮 Calculadora Predictiva Multimodelo")
+    # --- CALCULADORA PREDICTIVA TRIMODELO ---
+    st.markdown("### 🧮 Calculadora Predictiva Trimodelo")
 
     colf1, colf2, colf3, colf4 = st.columns(4)
     with colf1:
@@ -998,6 +1038,10 @@ elif selected_tab == "Predictor":
     procedencia_in = st.selectbox("Procedencia", options=modelos["procedencias"])
 
     def predecir_precios(peso, cantidad, sexo, procedencia, hora):
+        # 1. Predicción Simple
+        p_simple = modelos["modelo_simple"].predict(np.array([[peso]]))[0]
+
+        # 2. Predicción Múltiples (RL y RF)
         datos = {c: 0 for c in modelos["columnas_x"]}
         datos["P.Prom"] = peso
         datos["Cant."] = cantidad
@@ -1013,27 +1057,26 @@ elif selected_tab == "Predictor":
         df_p = pd.DataFrame([datos])[modelos["columnas_x"]]
         p_lr = modelos["modelo_lr"].predict(df_p)[0]
         p_rf = modelos["modelo_rf"].predict(df_p)[0]
-        return p_lr, p_rf
+        return p_simple, p_lr, p_rf
 
     if st.button("💰 Calcular estimaciones comparadas", type="primary"):
-        p_lr, p_rf = predecir_precios(peso_in, cant_in, sexo_in, procedencia_in, hora_in)
+        p_s, p_lr, p_rf = predecir_precios(peso_in, cant_in, sexo_in, procedencia_in, hora_in)
         
         c_res1, c_res2, c_res3 = st.columns(3)
         with c_res1:
-            st.markdown("#### Regresión Lineal")
+            st.markdown("#### RL Simple (Solo Peso)")
+            st.write(f"**Precio/Kg:** ${p_s:,.0f}")
+            st.write(f"**Valor Lote:** ${p_s * peso_in * cant_in:,.0f}")
+        
+        with c_res2:
+            st.markdown("#### RL Múltiple")
             st.write(f"**Precio/Kg:** ${p_lr:,.0f}")
             st.write(f"**Valor Lote:** ${p_lr * peso_in * cant_in:,.0f}")
         
-        with c_res2:
+        with c_res3:
             st.markdown("#### Random Forest (Recomendado)")
             st.write(f"**Precio/Kg:** ${p_rf:,.0f}")
             st.write(f"**Valor Lote:** ${p_rf * peso_in * cant_in:,.0f}")
-        
-        with c_res3:
-            st.markdown("#### Discrepancia")
-            dif = p_rf - p_lr
-            st.write(f"**Diferencia/Kg:** ${dif:+,.0f}")
-            st.caption("Random Forest se adapta mejor a patrones no lineales y combinaciones complejas de peso/categoría.")
 
     st.markdown("---")
     st.markdown("### 🌲 Importancia de Variables en Random Forest")
