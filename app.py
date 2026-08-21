@@ -5,14 +5,14 @@ SUGANORTE S.A. — ZARZAL, VALLE DEL CAUCA
 =============================================================================
 Descripción: 
 Dashboard institucional avanzado para el análisis histórico, modelado predictivo,
-pronósticos de series temporales y segmentación de clientes de la subasta ganadera.
+pronósticos de series temporales (Holt-Winters vs. Random Forest) y segmentación de clientes.
 
 Desarrollado para: Subasta Ganadera Suganorte S.A.
 Autores / Equipo del Proyecto: 
   - Jeferson Balcazar Gomez
   - Carlos Arturo Agudelo Garcia
   - Milton Vanegas Delgado
-Versión: 3.2.0 (Producción Streamlit Cloud)
+Versión: 3.3.0 (Producción Streamlit Cloud)
 =============================================================================
 """
 
@@ -794,21 +794,66 @@ elif selected_tab == "Predictor":
     st.plotly_chart(aplicar_estilo_grafico(fig_imp), use_container_width=True)
 
 # ---------------------------------------------------------
-# TAB 5: PRONÓSTICO
+# TAB 5: PRONÓSTICO (COMPARATIVA HOLT-WINTERS VS RANDOM FOREST TEMPORAL)
 # ---------------------------------------------------------
 elif selected_tab == "Pronóstico":
-    st.markdown("### Pronóstico de precio semanal (Holt-Winters)")
+    st.markdown("### 📈 Pronóstico de Precio Semanal: Holt-Winters vs. Random Forest Temporal")
+    st.caption("Comparación entre el modelo de suavizado exponencial estacional (Holt-Winters) y Machine Learning basado en árboles de decisión para la proyección de precios futuros.")
+
     df_ts = df_total.copy().set_index("Fecha_TS").sort_index()
     precio_semanal = df_ts["$Final"].resample("W").mean().ffill()
+
     if len(precio_semanal) >= 8:
         semanas_futuro = st.slider("Semanas a pronosticar hacia adelante", 2, 12, 4)
-        modelo_full = ExponentialSmoothing(precio_semanal, trend="add", seasonal=None, initialization_method="estimated").fit()
-        forecast_full = modelo_full.forecast(semanas_futuro)
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=precio_semanal.index, y=precio_semanal.values, mode="lines+markers", name="Histórico", line=dict(color="#003399")))
-        fig.add_trace(go.Scatter(x=forecast_full.index, y=forecast_full.values, mode="lines+markers", name="Pronóstico", line=dict(dash="dash", color="#008037")))
-        fig.update_layout(xaxis_title="Semana", yaxis_title="Precio Final Promedio ($/Kg)")
-        st.plotly_chart(aplicar_estilo_grafico(fig), use_container_width=True)
+
+        # 1. Modelo Holt-Winters
+        try:
+            hw_model = ExponentialSmoothing(precio_semanal, trend="add", seasonal=None, initialization_method="estimated").fit()
+            hw_forecast = hw_model.forecast(semanas_futuro)
+        except Exception:
+            hw_forecast = pd.Series([precio_semanal.iloc[-1]] * semanas_futuro)
+
+        # 2. Modelo Random Forest Temporal (Machine Learning)
+        df_ts_ml = precio_semanal.reset_index()
+        df_ts_ml.columns = ["Fecha_TS", "$Final"]
+        df_ts_ml["Semana_Index"] = np.arange(len(df_ts_ml))
+        df_ts_ml["Mes"] = df_ts_ml["Fecha_TS"].dt.month
+
+        X_ts = df_ts_ml[["Semana_Index", "Mes"]]
+        y_ts = df_ts_ml["$Final"]
+        rf_ts_model = RandomForestRegressor(n_estimators=100, random_state=42).fit(X_ts, y_ts)
+
+        # Proyectar futuro con Random Forest
+        ult_idx = df_ts_ml["Semana_Index"].max()
+        ult_fecha = df_ts_ml["Fecha_TS"].max()
+        
+        fechas_futuras = [ult_fecha + pd.Timedelta(weeks=i) for i in range(1, semanas_futuro + 1)]
+        futuro_index = pd.DataFrame({
+            "Semana_Index": np.arange(ult_idx + 1, ult_idx + 1 + semanas_futuro),
+            "Mes": [f.month for f in fechas_futuras]
+        })
+        rf_forecast_vals = rf_ts_model.predict(futuro_index)
+        rf_forecast = pd.Series(rf_forecast_vals, index=fechas_futuras)
+
+        # Gráfico Comparativo
+        fig_comp_ts = go.Figure()
+        fig_comp_ts.add_trace(go.Scatter(x=precio_semanal.index, y=precio_semanal.values, mode="lines+markers", name="Histórico Real", line=dict(color="#003399", width=2)))
+        fig_comp_ts.add_trace(go.Scatter(x=hw_forecast.index, y=hw_forecast.values, mode="lines+markers", name="Pronóstico Holt-Winters", line=dict(dash="dash", color="#008037", width=3)))
+        fig_comp_ts.add_trace(go.Scatter(x=rf_forecast.index, y=rf_forecast.values, mode="lines+markers", name="Pronóstico Random Forest Temporal", line=dict(dash="dot", color="#D97706", width=3)))
+        
+        fig_comp_ts.update_layout(xaxis_title="Semana", yaxis_title="Precio Promedio ($/Kg)", legend=dict(orientation="h", y=1.1, x=0, xanchor="left"))
+        st.plotly_chart(aplicar_estilo_grafico(fig_comp_ts), use_container_width=True)
+
+        st.markdown("---")
+        st.markdown("#### 📋 Detalle de Proyecciones Futuras")
+        df_tabla_forecast = pd.DataFrame({
+            "Fecha / Semana": [f.strftime('%Y-%m-%d') for f in hw_forecast.index],
+            "Holt-Winters ($/Kg)": [f"${val:,.0f}" for val in hw_forecast.values],
+            "Random Forest ($/Kg)": [f"${val:,.0f}" for val in rf_forecast.values]
+        })
+        st.table(df_tabla_forecast)
+    else:
+        st.warning("Se requieren al menos 8 semanas de datos históricos para generar pronósticos confiables.")
 
 # ---------------------------------------------------------
 # TAB 6: PROBABILIDAD DE PUJA (SIMULADOR Y ÁRBOL INTERACTIVO)
