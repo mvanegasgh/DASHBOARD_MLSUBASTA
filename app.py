@@ -1,7 +1,19 @@
 """
-Dashboard de Analítica Predictiva - Subasta Ganadera Suganorte S.A. (Zarzal, Valle)
-Interfaz Institucional Oficial alineada a la marca Suganorte S.A.
-Código Completo Integrado de Más de 1000 Líneas (Todas las Pestañas y Visualizaciones)
+=============================================================================
+PLATAFORMA DE ANALÍTICA PREDICTIVA Y GESTIÓN COMERCIAL
+SUGANORTE S.A. — ZARZAL, VALLE DEL CAUCA
+=============================================================================
+Descripción: 
+Dashboard institucional avanzado para el análisis histórico, modelado predictivo,
+pronósticos de series temporales y segmentación de clientes de la subasta ganadera.
+
+Desarrollado para: Subasta Ganadera Suganorte S.A.
+Autores / Equipo del Proyecto: 
+  - Jeferson Balcazar Gomez
+  - Carlos Arturo Agudelo Garcia
+  - Milton Vanegas Delgado
+Versión: 3.2.0 (Producción Streamlit Cloud)
+=============================================================================
 """
 
 import numpy as np
@@ -20,7 +32,7 @@ from sklearn.preprocessing import StandardScaler
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
 # =========================================================
-# CONFIGURACIÓN DE PÁGINA
+# CONFIGURACIÓN GLOBAL DE LA PÁGINA STREAMLIT
 # =========================================================
 st.set_page_config(
     page_title="Suganorte S.A. | Analítica Predictiva",
@@ -30,14 +42,14 @@ st.set_page_config(
 )
 
 # =========================================================
-# ESTILOS CSS INSTITUCIONALES UNIFICADOS
+# HOJA DE ESTILOS CSS INSTITUCIONALES AVANZADOS
 # =========================================================
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap');
     @import url('https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined|Material+Symbols+Outlined');
 
-    /* CORRECCIÓN ICONO COLLAPSE DE STREAMLIT */
+    /* CORRECCIÓN DE ICONOS EN BARRA LATERAL */
     [data-testid="stSidebarCollapseButton"] *,
     [data-testid="stSidebarCollapseButton"] button span,
     [data-testid="stSidebarCollapseButton"] span,
@@ -54,14 +66,14 @@ st.markdown("""
         direction: ltr !important;
     }
 
-    /* Fondo general */
+    /* Fondo general de la aplicación */
     html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stMain"] {
         background-color: #F8FAFC !important;
         color: #0F172A !important;
         font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
     }
 
-    /* LOGO SIDEBAR HTML */
+    /* CONTENEDOR LOGO SIDEBAR */
     .sidebar-brand {
         display: flex;
         align-items: center;
@@ -102,7 +114,7 @@ st.markdown("""
         margin-bottom: 12px;
     }
 
-    /* BANNER HEADER HTML */
+    /* BANNER PRINCIPAL INSTITUCIONAL */
     .suganorte-header-container {
         background: #003399;
         border-radius: 12px;
@@ -170,7 +182,7 @@ st.markdown("""
         border-right: 1px solid #E2E8F0 !important;
     }
 
-    /* COMPONENTES DE ENTRADA */
+    /* COMPONENTES DE ENTRADA Y FORMULARIOS */
     div[data-baseweb="select"] > div, 
     div[data-baseweb="input"] > div,
     input, 
@@ -181,7 +193,7 @@ st.markdown("""
         border-radius: 8px !important;
     }
 
-    /* TAGS MULTISELECT EN AZUL INSTITUCIONAL */
+    /* ETIQUETAS MULTISELECT INSTITUCIONALES */
     span[data-baseweb="tag"] {
         background-color: #003399 !important;
         border-radius: 6px !important;
@@ -192,7 +204,7 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* METRICAS */
+    /* TARJETAS DE MÉTRICAS */
     div[data-testid="stMetric"] {
         background-color: #FFFFFF !important;
         border: 1px solid #E2E8F0 !important;
@@ -226,7 +238,7 @@ st.markdown("""
         background-color: #006028 !important;
     }
 
-    /* ESTILOS DEL FOOTER OFICIAL SUGANORTE S.A. */
+    /* ESTILOS DEL FOOTER INSTITUCIONAL OFICIAL */
     .suganorte-footer-container {
         background-color: #003399;
         border-top: 5px solid #008037;
@@ -321,9 +333,11 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Paleta de colores institucional para Plotly
 theme_colors = ["#003399", "#008037", "#D97706", "#2563EB", "#059669"]
 
 def aplicar_estilo_grafico(fig):
+    """Aplica la plantilla visual corporativa a cualquier figura de Plotly."""
     fig.update_layout(
         plot_bgcolor="#FFFFFF",
         paper_bgcolor="#FFFFFF",
@@ -344,7 +358,7 @@ def cargar_datos(path="data.csv"):
     df["P.Prom"] = pd.to_numeric(df["P.Prom"], errors="coerce")
     df["Cant."] = pd.to_numeric(df["Cant."], errors="coerce")
     
-    # Homogeneización robusta de procedencias
+    # Homogeneización robusta de procedencias (evita cruces entre Buga y Bugalagrande)
     def limpiar_procedencia(x):
         if pd.isna(x): return "DESCONOCIDA"
         x = str(x).strip().upper()
@@ -401,6 +415,7 @@ except Exception:
     st.error("Error al cargar 'data.csv'. Verifica que se encuentre en la raíz del proyecto.")
     st.stop()
 
+# Diccionario oficial de categorías de ganado (Sexo)
 SEXO_LABELS = {
     "HL": "Hembra de Levante", "ML": "Macho de Levante", "VH": "Vaca Horra",
     "HV": "Hembra de Vientre", "TR": "Ternero(a)", "MC": "Macho de Ceba",
@@ -412,7 +427,7 @@ def etiqueta_sexo(codigo: str) -> str:
     return f"{codigo} · {SEXO_LABELS.get(codigo, codigo)}"
 
 # =========================================================
-# SIDEBAR
+# PANEL LATERAL DE FILTROS (SIDEBAR)
 # =========================================================
 st.sidebar.markdown("""
 <div>
@@ -473,7 +488,7 @@ if procedencias_sel:
 df = df_total[mask].copy()
 
 # =========================================================
-# BANNER PRINCIPAL
+# BANNER PRINCIPAL INSTITUCIONAL
 # =========================================================
 st.markdown("""
 <div class="suganorte-header-container">
@@ -496,7 +511,7 @@ if df.empty:
     st.stop()
 
 # =========================================================
-# MENÚ NAVEGACIÓN
+# MENÚ DE NAVEGACIÓN PRINCIPAL (OPTION MENU)
 # =========================================================
 selected_tab = option_menu(
     menu_title=None,
@@ -907,7 +922,7 @@ elif selected_tab == "Compradores":
             """, unsafe_allow_html=True)
 
 # =========================================================
-# FOOTER INSTITUCIONAL
+# FOOTER INSTITUCIONAL COMPLETO
 # =========================================================
 html_footer = """
 <div class="suganorte-footer-container">
