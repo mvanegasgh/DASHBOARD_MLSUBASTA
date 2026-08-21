@@ -1,7 +1,7 @@
 """
 Dashboard de Analítica Predictiva - Subasta Ganadera Suganorte S.A. (Zarzal, Valle)
-Interfaz Institucional Oficial alineada a la marca Suganorte S.A.
-Código Integrado Completo con Modelo Comparativo (Regresión Lineal vs. Random Forest)
+Interfaz Institucional Oficial con Modelo Comparativo (Regresión Lineal vs. Random Forest)
+Código Completo Integrado
 """
 
 import numpy as np
@@ -348,7 +348,7 @@ def cargar_datos(path="data.csv"):
     df["Margen_Puja"] = df["$Final"] - df["$Base"]
     df["Hubo_Puja"] = (df["$Final"] > df["$Base"]).astype(int)
 
-    # Variables Derivadas para Enriquecimiento Predictivo
+    # --- INGENIERÍA DE CARACTERÍSTICAS DERIVADAS ---
     df["Peso_Total"] = df["P.Prom"] * df["Cant."]
     df["Es_Lote_Multiple"] = (df["Cant."] > 1).astype(int)
     df["Mes"] = df["Fecha_TS"].dt.month
@@ -408,7 +408,7 @@ procedencias_sel = st.sidebar.multiselect(
 )
 
 st.sidebar.markdown("---")
-# Exportación de datos filtrados
+# Botón de exportación CSV
 csv_export = df_total.to_csv(index=False).encode('utf-8')
 st.sidebar.download_button(
     label="📥 Descargar Dataset Filtrado (CSV)",
@@ -514,7 +514,7 @@ if selected_tab == "Resumen":
         st.plotly_chart(fig3, use_container_width=True)
 
 # ---------------------------------------------------------
-# TAB 2: EXPLORACIÓN (VISUALIZACIÓN COMPLETA DE GRÁFICOS)
+# TAB 2: EXPLORACIÓN (VISUALIZACIÓN EXPLORATORIA COMPLETA)
 # ---------------------------------------------------------
 elif selected_tab == "Exploración":
     st.markdown("### 📈 Visualización Exploratoria Comercial y Operativa")
@@ -685,7 +685,7 @@ elif selected_tab == "Correlación":
     st.plotly_chart(fig_bar, use_container_width=True)
 
 # ---------------------------------------------------------
-# TAB 4: PREDICTOR COMPARATIVO (REGRESIÓN LINEAL VS RANDOM FOREST)
+# TAB 4: PREDICTOR COMPARATIVO CON GRÁFICOS DIAGNÓSTICOS
 # ---------------------------------------------------------
 elif selected_tab == "Predictor":
     @st.cache_resource
@@ -727,6 +727,9 @@ elif selected_tab == "Predictor":
             "modelo_lr": modelo_lr, "metricas_lr": metricas_lr,
             "modelo_rf": modelo_rf, "metricas_rf": metricas_rf,
             "columnas_x": columnas_x,
+            "y_test": y_te,
+            "y_pred_lr": y_pred_lr,
+            "y_pred_rf": y_pred_rf,
             "sexos": sorted(d["Sexo"].unique()),
             "procedencias": sorted(d["Procedencia"].unique()),
             "horas": sorted(d["Hora_Entrada"].astype(str).unique()),
@@ -748,7 +751,6 @@ elif selected_tab == "Predictor":
             f"${m_rf['RMSE'] - m_lr['RMSE']:,.2f} /Kg ({'Mejora' if m_rf['RMSE'] < m_lr['RMSE'] else 'Peor'})"
         ]
     })
-    
     st.table(df_comparativa)
 
     col1, col2, col3 = st.columns(3)
@@ -757,6 +759,78 @@ elif selected_tab == "Predictor":
     col3.metric("RMSE (Penalización Outliers)", f"${m_rf['RMSE']:,.0f}", delta=f"${m_rf['RMSE'] - m_lr['RMSE']:,.0f}", delta_color="inverse")
 
     st.markdown("---")
+
+    # --- SECCIÓN DE GRÁFICOS DIAGNÓSTICOS DE LOS MODELOS ---
+    st.markdown("### 📈 Evaluador Gráfico: Regresión Lineal vs. Random Forest")
+    st.caption("Comparativa de ajuste directo entre valores reales y predichos junto a la distribución del error de predicción.")
+
+    df_eval = pd.DataFrame({
+        "Real": modelos["y_test"],
+        "Regresión Lineal": modelos["y_pred_lr"],
+        "Random Forest": modelos["y_pred_rf"]
+    })
+
+    col_g1, col_g2 = st.columns(2)
+
+    with col_g1:
+        st.markdown("#### 🎯 Val. Reales vs. Predichos (Ajuste)")
+        fig_real_pred = go.Figure()
+
+        min_val = min(df_eval["Real"].min(), df_eval["Random Forest"].min())
+        max_val = max(df_eval["Real"].max(), df_eval["Random Forest"].max())
+
+        # Línea de referencia y = x (Predicción perfecta)
+        fig_real_pred.add_trace(go.Scatter(
+            x=[min_val, max_val], y=[min_val, max_val],
+            mode='lines', name='Predicción Perfecta (y=x)',
+            line=dict(color='#E11D48', dash='dash')
+        ))
+
+        # Dispersión Regresión Lineal
+        fig_real_pred.add_trace(go.Scatter(
+            x=df_eval["Real"], y=df_eval["Regresión Lineal"],
+            mode='markers', name='Regresión Lineal',
+            marker=dict(color='#2563EB', opacity=0.4, size=6)
+        ))
+
+        # Dispersión Random Forest
+        fig_real_pred.add_trace(go.Scatter(
+            x=df_eval["Real"], y=df_eval["Random Forest"],
+            mode='markers', name='Random Forest',
+            marker=dict(color='#008037', opacity=0.6, size=6)
+        ))
+
+        fig_real_pred.update_layout(
+            xaxis_title="Precio Real ($/Kg)",
+            yaxis_title="Precio Predicho ($/Kg)"
+        )
+        st.plotly_chart(aplicar_estilo_grafico(fig_real_pred), use_container_width=True)
+
+    with col_g2:
+        st.markdown("#### 📉 Distribución de Errores (Residuos)")
+        df_eval["Residuo_LR"] = df_eval["Real"] - df_eval["Regresión Lineal"]
+        df_eval["Residuo_RF"] = df_eval["Real"] - df_eval["Random Forest"]
+
+        fig_res = go.Figure()
+        fig_res.add_trace(go.Histogram(
+            x=df_eval["Residuo_LR"], name="Errores Reg. Lineal",
+            marker_color="#2563EB", opacity=0.5, nbinsx=35
+        ))
+        fig_res.add_trace(go.Histogram(
+            x=df_eval["Residuo_RF"], name="Errores Random Forest",
+            marker_color="#008037", opacity=0.6, nbinsx=35
+        ))
+
+        fig_res.update_layout(
+            barmode='overlay',
+            xaxis_title="Error de Predicción ($/Kg)",
+            yaxis_title="Frecuencia (Lotes)"
+        )
+        st.plotly_chart(aplicar_estilo_grafico(fig_res), use_container_width=True)
+
+    st.markdown("---")
+
+    # --- CALCULADORA PREDICTIVA ---
     st.markdown("### 🧮 Calculadora Predictiva Multimodelo")
 
     colf1, colf2, colf3, colf4 = st.columns(4)
