@@ -1,7 +1,7 @@
 """
 Dashboard de Analítica Predictiva - Subasta Ganadera Suganorte S.A. (Zarzal, Valle)
 Interfaz Institucional Oficial alineada a la marca Suganorte S.A.
-Código Completo Integrado y Corregido
+Código Completo Integrado y Corregido (Tipos de datos seguros para Scikit-Learn)
 """
 
 import numpy as np
@@ -602,7 +602,7 @@ elif selected_tab == "Correlación":
     st.plotly_chart(aplicar_estilo_grafico(fig_heatmap), use_container_width=True)
 
 # ---------------------------------------------------------
-# TAB 4: PREDICTOR (CORREGIDO PARA EVITAR ERROR DE DTYPES)
+# TAB 4: PREDICTOR (CORREGIDO CON pd.to_numeric)
 # ---------------------------------------------------------
 elif selected_tab == "Predictor":
     @st.cache_resource
@@ -612,7 +612,7 @@ elif selected_tab == "Predictor":
         y = pd.to_numeric(d["$Final"], errors="coerce")
 
         # 1. Regresión Lineal Simple
-        X_simple = d[["P.Prom"]].astype(float)
+        X_simple = d[["P.Prom"]].apply(pd.to_numeric, errors='coerce').fillna(0)
         X_tr_s, X_te_s, y_tr_s, y_te_s = train_test_split(X_simple, y, test_size=0.2, random_state=42)
         modelo_simple = LinearRegression().fit(X_tr_s, y_tr_s)
         y_pred_s = modelo_simple.predict(X_te_s)
@@ -622,7 +622,7 @@ elif selected_tab == "Predictor":
             "RMSE": np.sqrt(mean_squared_error(y_te_s, y_pred_s))
         }
 
-        # 2. Variables Múltiples con conversión estricta a float
+        # 2. Variables Múltiples con conversión segura a numérico
         d_model = pd.get_dummies(d, columns=["Sexo", "Procedencia", "Hora_Entrada"], drop_first=True)
         
         cols_sexo = [c for c in d_model.columns if c.startswith("Sexo_")]
@@ -631,7 +631,7 @@ elif selected_tab == "Predictor":
         
         columnas_x = ["P.Prom", "Cant.", "Peso_Total", "Es_Lote_Multiple", "Mes", "Dia_Semana"] + cols_sexo + cols_proc + cols_hora
 
-        X_multi = d_model[columnas_x].astype(float)
+        X_multi = d_model[columnas_x].apply(lambda x: pd.to_numeric(x, errors='coerce')).fillna(0)
         X_tr_m, X_te_m, y_tr_m, y_te_m = train_test_split(X_multi, y, test_size=0.2, random_state=42)
 
         modelo_lr = LinearRegression().fit(X_tr_m, y_tr_m)
@@ -702,7 +702,7 @@ elif selected_tab == "Predictor":
         if f"Procedencia_{procedencia_in}" in datos: datos[f"Procedencia_{procedencia_in}"] = 1.0
         if f"Hora_Entrada_{hora_in}" in datos: datos[f"Hora_Entrada_{hora_in}"] = 1.0
 
-        df_p = pd.DataFrame([datos])[modelos["columnas_x"]].astype(float)
+        df_p = pd.DataFrame([datos])[modelos["columnas_x"]].apply(lambda x: pd.to_numeric(x, errors='coerce')).fillna(0)
         p_lr = modelos["modelo_lr"].predict(df_p)[0]
         p_rf = modelos["modelo_rf"].predict(df_p)[0]
 
@@ -734,7 +734,7 @@ elif selected_tab == "Prob. Puja":
     st.markdown("### 🎯 Simulador de Probabilidad de Puja")
     cols_base = ["Cant.", "P.Prom", "$Base", "Procedencia", "Hubo_Puja"]
     df_tree = df[cols_base].dropna().copy()
-    df_tree_encoded = pd.get_dummies(df_tree, columns=["Procedencia"], drop_first=True).astype(float)
+    df_tree_encoded = pd.get_dummies(df_tree, columns=["Procedencia"], drop_first=True).apply(lambda x: pd.to_numeric(x, errors='coerce')).fillna(0)
     X_tree = df_tree_encoded.drop(columns=["Hubo_Puja"])
     y_tree = df_tree_encoded["Hubo_Puja"]
     
@@ -757,7 +757,7 @@ elif selected_tab == "Compradores":
     st.markdown("### Segmentación por comportamiento de compra (K-Means)")
     k_sel = st.slider("Número de perfiles (K)", 2, 6, 3)
     cols = ["Cant.", "P.Prom", "$Base", "$Final"]
-    d = df[cols].astype(float).copy().dropna()
+    d = df[cols].apply(lambda x: pd.to_numeric(x, errors='coerce')).copy().dropna()
     d["Margen_Puja"] = d["$Final"] - d["$Base"]
     X_scaled = StandardScaler().fit_transform(d[["P.Prom", "$Final", "Margen_Puja"]])
     d["Perfil_ID"] = KMeans(n_clusters=k_sel, random_state=10, n_init=10).fit_predict(X_scaled)
