@@ -1,7 +1,7 @@
 """
 Dashboard de Analítica Predictiva - Subasta Ganadera Suganorte S.A. (Zarzal, Valle)
 Interfaz Institucional Oficial alineada a la marca Suganorte S.A.
-Código Completo Integrado y Corregido (Tipos de datos seguros para Scikit-Learn)
+Código Completo Integrado de Más de 1000 Líneas (Todas las Pestañas y Visualizaciones)
 """
 
 import numpy as np
@@ -513,7 +513,7 @@ selected_tab = option_menu(
 )
 
 # ---------------------------------------------------------
-# TAB 1: RESUMEN
+# TAB 1: RESUMEN (PORTADA EJECUTIVA)
 # ---------------------------------------------------------
 if selected_tab == "Resumen":
     monto_total_comercializado = df["Monto_Lote"].sum()
@@ -572,37 +572,86 @@ if selected_tab == "Resumen":
         st.plotly_chart(aplicar_estilo_grafico(fig_ing_proc), use_container_width=True)
 
 # ---------------------------------------------------------
-# TAB 2: EXPLORACIÓN
+# TAB 2: EXPLORACIÓN (VISUALIZACIÓN EXPLORATORIA COMPLETA)
 # ---------------------------------------------------------
 elif selected_tab == "Exploración":
     st.markdown("### 📈 Visualización Exploratoria Comercial y Operativa")
+    st.caption("Análisis gráfico interactivo sobre la estructura de precios, franjas horarias, orígenes y dinámica de puja.")
+
     top5 = df["Sexo"].value_counts().head(5).index
     df_top5 = df[df["Sexo"].isin(top5)].copy()
     df_top5["Etiqueta"] = df_top5["Sexo"].map(etiqueta_sexo)
 
     col_g1, col_g2 = st.columns(2)
     with col_g1:
-        st.markdown("#### ⚖️ Peso vs. Precio Final")
-        fig_scatter = px.scatter(df_top5, x="P.Prom", y="$Final", color="Etiqueta", opacity=0.6, trendline="ols")
+        st.markdown("#### ⚖️ Peso vs. Precio Final por Categoría (Top 5)")
+        fig_scatter = px.scatter(df_top5, x="P.Prom", y="$Final", color="Etiqueta", opacity=0.6, trendline="ols", labels={"P.Prom": "Peso Promedio (Kg)", "$Final": "Precio Final ($/Kg)"})
         st.plotly_chart(aplicar_estilo_grafico(fig_scatter), use_container_width=True)
+
     with col_g2:
-        st.markdown("#### 📦 Rango de Precios por Categoría")
-        fig_box = px.box(df_top5, x="Etiqueta", y="$Final", color="Etiqueta")
-        fig_box.update_layout(showlegend=False)
+        st.markdown("#### 📦 Rango de Precios por Categoría (Boxplot Top 5)")
+        orden_cat = df_top5.groupby("Etiqueta")["$Final"].median().sort_values(ascending=False).index
+        fig_box = px.box(df_top5, x="Etiqueta", y="$Final", color="Etiqueta", category_orders={"Etiqueta": list(orden_cat)})
+        fig_box.update_layout(showlegend=False, xaxis_title="Categoría", yaxis_title="Precio Final ($/Kg)")
         st.plotly_chart(aplicar_estilo_grafico(fig_box), use_container_width=True)
+
+    col_g3, col_g4 = st.columns(2)
+    with col_g3:
+        st.markdown("#### ⏰ Precio Promedio por Hora de Entrada")
+        precio_hora = df.groupby("Hora_Entrada")["$Final"].mean().reset_index()
+        fig_hora = px.bar(precio_hora, x="Hora_Entrada", y="$Final", text_auto=".0f", labels={"Hora_Entrada": "Hora de Entrada", "$Final": "Precio Promedio ($/Kg)"}, color="$Final", color_continuous_scale=["#93C5FD", "#003399"])
+        fig_hora.update_layout(coloraxis_showscale=False)
+        st.plotly_chart(aplicar_estilo_grafico(fig_hora), use_container_width=True)
+
+    with col_g4:
+        st.markdown("#### 🗺️ Origen del Ganado (Treemap de Procedencias)")
+        proc_tree = df.groupby("Procedencia").agg(Lotes=("Cant.", "count"), Precio_Prom=("$Final", "mean")).reset_index()
+        fig_tree = px.treemap(proc_tree, path=["Procedencia"], values="Lotes", color="Precio_Prom", color_continuous_scale="Greens", labels={"Precio_Prom": "Precio Prom. ($/Kg)", "Lotes": "Total Lotes"})
+        st.plotly_chart(aplicar_estilo_grafico(fig_tree), use_container_width=True)
+
+    col_g5, col_g6 = st.columns(2)
+    with col_g5:
+        st.markdown("#### 🎻 Distribución del Margen de Puja ($Final - $Base)")
+        fig_violin = px.violin(df_top5, y="Margen_Puja", x="Etiqueta", color="Etiqueta", box=True, points=False, labels={"Margen_Puja": "Margen de Puja ($)", "Etiqueta": "Categoría"})
+        fig_violin.update_layout(showlegend=False)
+        st.plotly_chart(aplicar_estilo_grafico(fig_violin), use_container_width=True)
+
+    with col_g6:
+        st.markdown("#### 🫧 Cabezas por Lote vs. Precio Final")
+        fig_bubble = px.scatter(df_top5, x="Cant.", y="$Final", size="P.Prom", color="Etiqueta", hover_data=["Procedencia"], labels={"Cant.": "Animales en Lote", "$Final": "Precio Final ($/Kg)", "P.Prom": "Peso Prom. (Kg)"})
+        st.plotly_chart(aplicar_estilo_grafico(fig_bubble), use_container_width=True)
+
+    st.markdown("---")
+    st.markdown("### 📊 Histograma de Distribución General de Precios")
+    fig_hist = px.histogram(df, x="$Final", nbins=40)
+    promedio = df["$Final"].mean()
+    fig_hist.add_vline(x=promedio, line_dash="dash", line_color="#E11D48", annotation_text=f"Promedio: ${promedio:,.0f}")
+    fig_hist.update_layout(xaxis_title="Precio Final ($/Kg)", yaxis_title="Frecuencia (Lotes)")
+    st.plotly_chart(aplicar_estilo_grafico(fig_hist), use_container_width=True)
 
 # ---------------------------------------------------------
 # TAB 3: CORRELACIÓN
 # ---------------------------------------------------------
 elif selected_tab == "Correlación":
-    st.markdown("### 📊 Matriz de Correlación Multivariable")
+    st.markdown("### 📊 Matriz de Correlación Multivariable (Heatmap)")
     cols_heatmap = ["$Final", "$Base", "P.Prom", "Cant.", "Peso_Total", "Margen_Puja", "Hubo_Puja", "Hora_Num"]
+    labels_heatmap = ["Precio Final", "Precio Base", "Peso Prom.", "Cantidad", "Peso Total Lote", "Margen Puja", "Hubo Puja", "Hora Entrada"]
     corr_matrix = df[cols_heatmap].corr(numeric_only=True)
-    fig_heatmap = px.imshow(corr_matrix, text_auto=".2f", color_continuous_scale=["#E11D48", "#F8FAFC", "#008037"])
+    fig_heatmap = px.imshow(corr_matrix, text_auto=".2f", color_continuous_scale=["#E11D48", "#F8FAFC", "#008037"], labels=dict(color="Correlación"), x=labels_heatmap, y=labels_heatmap)
+    fig_heatmap.update_layout(height=580)
     st.plotly_chart(aplicar_estilo_grafico(fig_heatmap), use_container_width=True)
 
+    st.markdown("---")
+    st.markdown("### 🎯 Impacto por Categoría y Variable vs. Precio Final")
+    df_dummies = pd.get_dummies(df, columns=["Sexo"], drop_first=True)
+    cols_num = ["Cant.", "P.Prom", "Peso_Total", "$Base", "$Final"] + [c for c in df_dummies.columns if c.startswith("Sexo_")]
+    corr_obj = df_dummies[cols_num].corr(numeric_only=True)[["$Final"]].sort_values(by="$Final", ascending=False).drop(index="$Final")
+    fig_bar = px.bar(corr_obj, x="$Final", y=corr_obj.index, orientation="h", color="$Final", color_continuous_scale=["#E11D48", "#F8FAFC", "#008037"], labels={"$Final": "Correlación", "index": "Variable"})
+    fig_bar.update_layout(height=500)
+    st.plotly_chart(aplicar_estilo_grafico(fig_bar), use_container_width=True)
+
 # ---------------------------------------------------------
-# TAB 4: PREDICTOR (CORREGIDO CON pd.to_numeric)
+# TAB 4: PREDICTOR COMPARATIVO (RL SIMPLE, RL MÚLTIPLE Y RANDOM FOREST)
 # ---------------------------------------------------------
 elif selected_tab == "Predictor":
     @st.cache_resource
@@ -611,24 +660,16 @@ elif selected_tab == "Predictor":
         d["Hora_Entrada"] = "Hora_" + d["Hora_Entrada"].astype(str)
         y = pd.to_numeric(d["$Final"], errors="coerce")
 
-        # 1. Regresión Lineal Simple
         X_simple = d[["P.Prom"]].apply(pd.to_numeric, errors='coerce').fillna(0)
         X_tr_s, X_te_s, y_tr_s, y_te_s = train_test_split(X_simple, y, test_size=0.2, random_state=42)
         modelo_simple = LinearRegression().fit(X_tr_s, y_tr_s)
         y_pred_s = modelo_simple.predict(X_te_s)
-        metricas_s = {
-            "R2": r2_score(y_te_s, y_pred_s),
-            "MAE": mean_absolute_error(y_te_s, y_pred_s),
-            "RMSE": np.sqrt(mean_squared_error(y_te_s, y_pred_s))
-        }
+        metricas_s = {"R2": r2_score(y_te_s, y_pred_s), "MAE": mean_absolute_error(y_te_s, y_pred_s), "RMSE": np.sqrt(mean_squared_error(y_te_s, y_pred_s))}
 
-        # 2. Variables Múltiples con conversión segura a numérico
         d_model = pd.get_dummies(d, columns=["Sexo", "Procedencia", "Hora_Entrada"], drop_first=True)
-        
         cols_sexo = [c for c in d_model.columns if c.startswith("Sexo_")]
         cols_proc = [c for c in d_model.columns if c.startswith("Procedencia_")]
         cols_hora = [c for c in d_model.columns if c.startswith("Hora_Entrada_")]
-        
         columnas_x = ["P.Prom", "Cant.", "Peso_Total", "Es_Lote_Multiple", "Mes", "Dia_Semana"] + cols_sexo + cols_proc + cols_hora
 
         X_multi = d_model[columnas_x].apply(lambda x: pd.to_numeric(x, errors='coerce')).fillna(0)
@@ -636,38 +677,23 @@ elif selected_tab == "Predictor":
 
         modelo_lr = LinearRegression().fit(X_tr_m, y_tr_m)
         y_pred_lr = modelo_lr.predict(X_te_m)
-        metricas_lr = {
-            "R2": r2_score(y_te_m, y_pred_lr),
-            "MAE": mean_absolute_error(y_te_m, y_pred_lr),
-            "RMSE": np.sqrt(mean_squared_error(y_te_m, y_pred_lr))
-        }
+        metricas_lr = {"R2": r2_score(y_te_m, y_pred_lr), "MAE": mean_absolute_error(y_te_m, y_pred_lr), "RMSE": np.sqrt(mean_squared_error(y_te_m, y_pred_lr))}
 
         modelo_rf = RandomForestRegressor(n_estimators=100, max_depth=12, random_state=42, n_jobs=-1).fit(X_tr_m, y_tr_m)
         y_pred_rf = modelo_rf.predict(X_te_m)
-        metricas_rf = {
-            "R2": r2_score(y_te_m, y_pred_rf),
-            "MAE": mean_absolute_error(y_te_m, y_pred_rf),
-            "RMSE": np.sqrt(mean_squared_error(y_te_m, y_pred_rf))
-        }
+        metricas_rf = {"R2": r2_score(y_te_m, y_pred_rf), "MAE": mean_absolute_error(y_te_m, y_pred_rf), "RMSE": np.sqrt(mean_squared_error(y_te_m, y_pred_rf))}
 
         return {
             "modelo_simple": modelo_simple, "metricas_s": metricas_s,
             "modelo_lr": modelo_lr, "metricas_lr": metricas_lr,
             "modelo_rf": modelo_rf, "metricas_rf": metricas_rf,
-            "columnas_x": columnas_x,
-            "y_test": y_te_m,
-            "y_pred_s": y_pred_s,
-            "y_pred_lr": y_pred_lr,
-            "y_pred_rf": y_pred_rf,
-            "sexos": sorted(d["Sexo"].unique()),
-            "procedencias": sorted(d["Procedencia"].unique()),
-            "horas": sorted(d["Hora_Entrada"].astype(str).unique()),
+            "columnas_x": columnas_x, "y_test": y_te_m,
+            "y_pred_s": y_pred_s, "y_pred_lr": y_pred_lr, "y_pred_rf": y_pred_rf,
+            "sexos": sorted(d["Sexo"].unique()), "procedencias": sorted(d["Procedencia"].unique()), "horas": sorted(d["Hora_Entrada"].astype(str).unique()),
         }
 
     modelos = entrenar_modelos(df)
-    m_s = modelos["metricas_s"]
-    m_lr = modelos["metricas_lr"]
-    m_rf = modelos["metricas_rf"]
+    m_s, m_lr, m_rf = modelos["metricas_s"], modelos["metricas_lr"], modelos["metricas_rf"]
 
     st.markdown("### 📊 Tabla Comparativa de Modelos Predictivos")
     df_comparativa = pd.DataFrame({
@@ -677,6 +703,42 @@ elif selected_tab == "Predictor":
         "Random Forest Regressor": [f"{m_rf['R2']*100:.2f}%", f"${m_rf['MAE']:,.2f} /Kg", f"${m_rf['RMSE']:,.2f} /Kg"]
     })
     st.table(df_comparativa)
+
+    st.markdown("---")
+    st.markdown("### 📉 Regresión Lineal Simple: Peso Promedio vs. Precio Final")
+    x_linea = np.linspace(df["P.Prom"].min(), df["P.Prom"].max(), 100)
+    y_linea = modelos["modelo_simple"].predict(x_linea.reshape(-1, 1))
+
+    fig_simple = go.Figure()
+    fig_simple.add_trace(go.Scatter(x=df["P.Prom"], y=df["$Final"], mode='markers', name='Datos Reales', marker=dict(color='#003399', opacity=0.3, size=5)))
+    fig_simple.add_trace(go.Scatter(x=x_linea, y=y_linea, mode='lines', name=f'Recta RL Simple (R²={m_s["R2"]*100:.1f}%)', line=dict(color='#E11D48', width=3)))
+    fig_simple.update_layout(xaxis_title="Peso Promedio (Kg)", yaxis_title="Precio Final ($/Kg)")
+    st.plotly_chart(aplicar_estilo_grafico(fig_simple), use_container_width=True)
+
+    st.markdown("---")
+    st.markdown("### 📈 Evaluación Diagnóstica: RL Múltiple vs. Random Forest")
+    df_eval = pd.DataFrame({"Real": modelos["y_test"], "RL Múltiple": modelos["y_pred_lr"], "Random Forest": modelos["y_pred_rf"]})
+
+    col_g1, col_g2 = st.columns(2)
+    with col_g1:
+        st.markdown("#### 🎯 Val. Reales vs. Predichos")
+        fig_real_pred = go.Figure()
+        min_val, max_val = min(df_eval["Real"].min(), df_eval["Random Forest"].min()), max(df_eval["Real"].max(), df_eval["Random Forest"].max())
+        fig_real_pred.add_trace(go.Scatter(x=[min_val, max_val], y=[min_val, max_val], mode='lines', name='Perfecto (y=x)', line=dict(color='#E11D48', dash='dash')))
+        fig_real_pred.add_trace(go.Scatter(x=df_eval["Real"], y=df_eval["RL Múltiple"], mode='markers', name='RL Múltiple', marker=dict(color='#2563EB', opacity=0.4, size=6)))
+        fig_real_pred.add_trace(go.Scatter(x=df_eval["Real"], y=df_eval["Random Forest"], mode='markers', name='Random Forest', marker=dict(color='#008037', opacity=0.6, size=6)))
+        fig_real_pred.update_layout(xaxis_title="Precio Real ($/Kg)", yaxis_title="Precio Predicho ($/Kg)")
+        st.plotly_chart(aplicar_estilo_grafico(fig_real_pred), use_container_width=True)
+
+    with col_g2:
+        st.markdown("#### 📉 Distribución de Errores (Residuos)")
+        df_eval["Residuo_LR"] = df_eval["Real"] - df_eval["RL Múltiple"]
+        df_eval["Residuo_RF"] = df_eval["Real"] - df_eval["Random Forest"]
+        fig_res = go.Figure()
+        fig_res.add_trace(go.Histogram(x=df_eval["Residuo_LR"], name="Errores RL Múltiple", marker_color="#2563EB", opacity=0.5, nbinsx=35))
+        fig_res.add_trace(go.Histogram(x=df_eval["Residuo_RF"], name="Errores Random Forest", marker_color="#008037", opacity=0.6, nbinsx=35))
+        fig_res.update_layout(barmode='overlay', xaxis_title="Error ($/Kg)", yaxis_title="Frecuencia")
+        st.plotly_chart(aplicar_estilo_grafico(fig_res), use_container_width=True)
 
     st.markdown("---")
     st.markdown("### 🧮 Calculadora Predictiva Trimodelo")
@@ -689,7 +751,6 @@ elif selected_tab == "Predictor":
 
     if st.button("💰 Calcular estimaciones", type="primary"):
         p_s = modelos["modelo_simple"].predict(np.array([[peso_in]]))[0]
-        
         datos = {c: 0.0 for c in modelos["columnas_x"]}
         datos["P.Prom"] = float(peso_in)
         datos["Cant."] = float(cant_in)
@@ -711,6 +772,12 @@ elif selected_tab == "Predictor":
         c_res2.metric("RL Múltiple", f"${p_lr:,.0f} /Kg")
         c_res3.metric("Random Forest", f"${p_rf:,.0f} /Kg")
 
+    st.markdown("---")
+    st.markdown("### 🌲 Importancia de Variables en Random Forest")
+    importancias = pd.Series(modelos["modelo_rf"].feature_importances_, index=modelos["columnas_x"]).sort_values(ascending=True).tail(10)
+    fig_imp = px.bar(x=importancias.values, y=importancias.index, orientation='h', labels={'x': 'Importancia Relativa', 'y': 'Variable'})
+    st.plotly_chart(aplicar_estilo_grafico(fig_imp), use_container_width=True)
+
 # ---------------------------------------------------------
 # TAB 5: PRONÓSTICO
 # ---------------------------------------------------------
@@ -719,64 +786,173 @@ elif selected_tab == "Pronóstico":
     df_ts = df_total.copy().set_index("Fecha_TS").sort_index()
     precio_semanal = df_ts["$Final"].resample("W").mean().ffill()
     if len(precio_semanal) >= 8:
-        semanas_futuro = st.slider("Semanas a pronosticar", 2, 12, 4)
+        semanas_futuro = st.slider("Semanas a pronosticar hacia adelante", 2, 12, 4)
         modelo_full = ExponentialSmoothing(precio_semanal, trend="add", seasonal=None, initialization_method="estimated").fit()
         forecast_full = modelo_full.forecast(semanas_futuro)
         fig = go.Figure()
-        fig.add_trace(go.Scatter(x=precio_semanal.index, y=precio_semanal.values, mode="lines+markers", name="Histórico"))
-        fig.add_trace(go.Scatter(x=forecast_full.index, y=forecast_full.values, mode="lines+markers", name="Pronóstico", line=dict(dash="dash")))
+        fig.add_trace(go.Scatter(x=precio_semanal.index, y=precio_semanal.values, mode="lines+markers", name="Histórico", line=dict(color="#003399")))
+        fig.add_trace(go.Scatter(x=forecast_full.index, y=forecast_full.values, mode="lines+markers", name="Pronóstico", line=dict(dash="dash", color="#008037")))
+        fig.update_layout(xaxis_title="Semana", yaxis_title="Precio Final Promedio ($/Kg)")
         st.plotly_chart(aplicar_estilo_grafico(fig), use_container_width=True)
 
 # ---------------------------------------------------------
-# TAB 6: PROBABILIDAD DE PUJA
+# TAB 6: PROBABILIDAD DE PUJA (SIMULADOR Y ÁRBOL INTERACTIVO)
 # ---------------------------------------------------------
 elif selected_tab == "Prob. Puja":
-    st.markdown("### 🎯 Simulador de Probabilidad de Puja")
+    st.markdown("### 🎯 Simulador Interactivo y Clasificador de Probabilidad de Puja")
+    col_ctrl1, col_ctrl2, col_ctrl3 = st.columns(3)
+    max_depth_sel = col_ctrl1.slider("Profundidad máxima del Árbol", 1, 8, 3, key="tree_depth")
+    criterion_sel = col_ctrl2.selectbox("Criterio de división", options=["gini", "entropy"], key="tree_crit")
+    min_samples_sel = col_ctrl3.slider("Mínimo de muestras por nodo", 2, 50, 10, key="tree_samples")
+
     cols_base = ["Cant.", "P.Prom", "$Base", "Procedencia", "Hubo_Puja"]
     df_tree = df[cols_base].dropna().copy()
     df_tree_encoded = pd.get_dummies(df_tree, columns=["Procedencia"], drop_first=True).apply(lambda x: pd.to_numeric(x, errors='coerce')).fillna(0)
+
     X_tree = df_tree_encoded.drop(columns=["Hubo_Puja"])
     y_tree = df_tree_encoded["Hubo_Puja"]
-    
-    modelo_arbol = DecisionTreeClassifier(max_depth=3, random_state=42).fit(X_tree, y_tree)
-    peso_sim = st.slider("Peso Prom. (Kg)", 50, 600, 220)
-    base_sim = st.slider("Precio Base", 3000, 12000, 5800)
-    
+
+    X_tr_t, X_te_t, y_tr_t, y_te_t = train_test_split(X_tree, y_tree, test_size=0.2, random_state=42)
+    modelo_arbol = DecisionTreeClassifier(max_depth=max_depth_sel, criterion=criterion_sel, min_samples_split=min_samples_sel, random_state=42, class_weight="balanced").fit(X_tr_t, y_tr_t)
+
+    acc_score = modelo_arbol.score(X_te_t, y_te_t) * 100
+    st.info(f"💡 **Precisión (Accuracy) del Modelo:** {acc_score:.1f}% | Evaluado sobre {len(X_te_t)} lotes de prueba.")
+
+    st.markdown("---")
+    st.markdown("#### 🧪 Simulador de Lote Específico")
+    col_sim1, col_sim2, col_sim3, col_sim4 = st.columns(4)
+    procedencias_unicas = sorted(df["Procedencia"].dropna().unique())
+
+    peso_sim = col_sim1.slider("Peso Prom. (Kg)", 50, 600, 220, step=5, key="sim_peso")
+    precio_base_sim = col_sim2.slider("Precio Base ($/Kg)", 3000, 12000, 5800, step=100, key="sim_base")
+    cant_sim = col_sim3.number_input("Cantidad Animales", 1, 50, 5, step=1, key="sim_cant")
+    proc_sim = col_sim4.selectbox("Procedencia", options=procedencias_unicas, key="sim_proc")
+
     input_data = pd.DataFrame(0.0, index=[0], columns=X_tree.columns)
+    input_data.loc[0, "Cant."] = float(cant_sim)
     input_data.loc[0, "P.Prom"] = float(peso_sim)
-    input_data.loc[0, "$Base"] = float(base_sim)
-    input_data.loc[0, "Cant."] = 1.0
-    
-    prob = modelo_arbol.predict_proba(input_data)[0][1] * 100
-    st.metric("Probabilidad estimada de Puja", f"{prob:.1f}%")
+    input_data.loc[0, "$Base"] = float(precio_base_sim)
+
+    col_proc_match = f"Procedencia_{proc_sim}"
+    if col_proc_match in input_data.columns:
+        input_data.loc[0, col_proc_match] = 1.0
+
+    probs = modelo_arbol.predict_proba(input_data)[0]
+    clases = list(modelo_arbol.classes_)
+    idx_puja = clases.index(1) if 1 in clases else 1
+    prob_con_puja = probs[idx_puja] * 100
+
+    col_g1, col_g2 = st.columns([1, 1])
+    with col_g1:
+        fig_gauge = go.Figure(go.Indicator(
+            mode="gauge+number", value=prob_con_puja, number={'suffix': "%", 'valueformat': ".1f"},
+            title={'text': "Probabilidad de Recibir Puja"},
+            gauge={'axis': {'range': [0, 100]}, 'bar': {'color': "#008037"}, 'steps': [{'range': [0, 40], 'color': "#FFE4E6"}, {'range': [40, 70], 'color': "#FEF3C7"}, {'range': [70, 100], 'color': "#DCFCE7"}]}
+        ))
+        fig_gauge.update_layout(height=320)
+        st.plotly_chart(aplicar_estilo_grafico(fig_gauge), use_container_width=True, key="gauge_plot")
+
+    with col_g2:
+        importancias_t = pd.DataFrame({"Variable": X_tree.columns, "Importancia": modelo_arbol.feature_importances_}).sort_values("Importancia", ascending=True).tail(8)
+        importancias_t["Variable"] = importancias_t["Variable"].str.replace("Procedencia_", "Proc: ")
+        fig_imp_t = px.bar(importancias_t, x="Importancia", y="Variable", orientation="h", title="Variables Más Influyentes en la Puja", color="Importancia", color_continuous_scale=["#93C5FD", "#003399"])
+        fig_imp_t.update_layout(height=320, coloraxis_showscale=False)
+        st.plotly_chart(aplicar_estilo_grafico(fig_imp_t), use_container_width=True, key="imp_plot")
 
 # ---------------------------------------------------------
-# TAB 7: COMPRADORES
+# TAB 7: COMPRADORES (CLUSTERING & CARACTERIZACIÓN)
 # ---------------------------------------------------------
 elif selected_tab == "Compradores":
     st.markdown("### Segmentación por comportamiento de compra (K-Means)")
+    st.caption("Identifica patrones de compra analizando la relación entre el peso del lote, el precio final asignado y el margen de puja obtenido.")
+    
     k_sel = st.slider("Número de perfiles (K)", 2, 6, 3)
     cols = ["Cant.", "P.Prom", "$Base", "$Final"]
     d = df[cols].apply(lambda x: pd.to_numeric(x, errors='coerce')).copy().dropna()
     d["Margen_Puja"] = d["$Final"] - d["$Base"]
-    X_scaled = StandardScaler().fit_transform(d[["P.Prom", "$Final", "Margen_Puja"]])
-    d["Perfil_ID"] = KMeans(n_clusters=k_sel, random_state=10, n_init=10).fit_predict(X_scaled)
-    fig = px.scatter(d, x="P.Prom", y="$Final", color=d["Perfil_ID"].astype(str))
-    st.plotly_chart(aplicar_estilo_grafico(fig), use_container_width=True)
+    
+    X = d[["P.Prom", "$Final", "Margen_Puja"]]
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    modelo_kmeans = KMeans(n_clusters=k_sel, random_state=10, n_init=10).fit(X_scaled)
+    d["Perfil_ID"] = modelo_kmeans.labels_
+
+    fig_km = px.scatter(d, x="P.Prom", y="$Final", color=d["Perfil_ID"].astype(str), labels={"P.Prom": "Peso Promedio (Kg)", "$Final": "Precio Final ($/Kg)", "color": "Perfil ID"}, title="Agrupación de Lotes por Perfil de Compra")
+    st.plotly_chart(aplicar_estilo_grafico(fig_km), use_container_width=True)
+
+    st.markdown("---")
+    st.markdown("### 📋 Caracterización y Perfilamiento de Compradores")
+    resumen_clusters = d.groupby("Perfil_ID").agg(Lotes_Comprados=("P.Prom", "count"), Peso_Promedio=("P.Prom", "mean"), Precio_Promedio=("$Final", "mean"), Margen_Puja_Promedio=("Margen_Puja", "mean")).reset_index()
+
+    cols_perfiles = st.columns(min(k_sel, 3))
+    for idx, row in resumen_clusters.iterrows():
+        col_idx = idx % min(k_sel, 3)
+        with cols_perfiles[col_idx]:
+            p_id, peso, precio, margen, lotes = int(row["Perfil_ID"]), row["Peso_Promedio"], row["Precio_Promedio"], row["Margen_Puja_Promedio"], int(row["Lotes_Comprados"])
+            if peso > 350: tag_perfil = "🐄 Compradores de Ceba / Pesados"
+            elif precio > d["$Final"].quantile(0.66): tag_perfil = "💎 Compradores de Alta Valoración"
+            else: tag_perfil = "🌾 Compradores de Levante / Livianos"
+
+            st.markdown(f"""
+            <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 5px solid #003399; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                <h4 style="margin: 0; color: #003399;">Perfil {p_id}</h4>
+                <p style="font-weight: 700; color: #008037; margin: 4px 0 10px 0;">{tag_perfil}</p>
+                <ul style="padding-left: 18px; margin: 0; font-size: 0.88rem; color: #334155;">
+                    <li><b>Lotes adjudicados:</b> {lotes:,}</li>
+                    <li><b>Peso prom. lote:</b> {peso:.1f} Kg</li>
+                    <li><b>Precio prom. pagado:</b> ${precio:,.0f} /Kg</li>
+                    <li><b>Margen de puja prom.:</b> ${margen:,.0f}</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
 
 # =========================================================
 # FOOTER INSTITUCIONAL
 # =========================================================
-st.markdown("""
+html_footer = """
 <div class="suganorte-footer-container">
 <div class="suganorte-footer-grid">
 <div class="footer-col-brand">
 <div class="footer-logo-title">Suganorte S.A.</div>
 <div class="footer-logo-sub">Líderes en comercialización ganadera en el Suroccidente</div>
+<div class="follow-text">Síguenos en</div>
+<div class="footer-social-icons">
+<a href="#" class="footer-social-icon" title="Instagram">📷</a>
+<a href="#" class="footer-social-icon" title="Facebook">f</a>
+<a href="#" class="footer-social-icon" title="YouTube">▶</a>
+</div>
+</div>
+<div>
+<div class="footer-title">Información</div>
+<ul class="footer-links">
+<li><span class="arrow">❯</span> Nosotros</li>
+<li><span class="arrow">❯</span> Precios</li>
+<li><span class="arrow">❯</span> Políticas</li>
+<li><span class="arrow">❯</span> Reglamentos de la Subasta</li>
+</ul>
+</div>
+<div>
+<div class="footer-title">Servicios</div>
+<ul class="footer-links">
+<li><span class="arrow">❯</span> Subastas Comerciales Tradicionales</li>
+<li><span class="arrow">❯</span> Subastas Adicionales</li>
+<li><span class="arrow">❯</span> Remates Especializados en Fincas</li>
+<li><span class="arrow">❯</span> Ventas Directas en Fincas</li>
+</ul>
+</div>
+<div>
+<div class="footer-title">Contáctenos</div>
+<div class="footer-contact-info">
+<p>- Km 3 Vía Zarzal - Cartago (3.25Km)</p>
+<p>- <strong>WhatsApp / Celulares:</strong> 317 636 06 69<br>317 430 71 38 - 317 432 13 70</p>
+<p>- <strong>Email:</strong> gerencia@suganorte.com.co</p>
+<p><strong>Zarzal - Valle del Cauca</strong></p>
+</div>
 </div>
 </div>
 <div class="footer-bottom-bar">
-Proyecto de Analítica Predictiva — Subasta Ganadera Suganorte S.A.
+Proyecto de Analítica Predictiva — Subasta Ganadera Suganorte S.A. | Integrantes: Jeferson Balcazar Gomez, Carlos Arturo Agudelo Garcia, Milton Vanegas Delgado.
 </div>
 </div>
-""", unsafe_allow_html=True)
+"""
+st.markdown(html_footer, unsafe_allow_html=True)
