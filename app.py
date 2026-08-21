@@ -1,6 +1,6 @@
 """
 Dashboard de Analítica Predictiva - Subasta Ganadera Suganorte S.A. (Zarzal, Valle)
-Interfaz Institucional Oficial con Modelo Comparativo (Regresión Lineal vs. Random Forest)
+Interfaz Institucional Oficial alineada a la marca Suganorte S.A.
 Código Completo Integrado
 """
 
@@ -353,6 +353,17 @@ def cargar_datos(path="data.csv"):
     df["Es_Lote_Multiple"] = (df["Cant."] > 1).astype(int)
     df["Mes"] = df["Fecha_TS"].dt.month
     df["Dia_Semana"] = df["Fecha_TS"].dt.dayofweek
+    df["Monto_Lote"] = df["$Final"] * df["P.Prom"] * df["Cant."]
+    
+    # Prima porcentual de puja
+    df["Prima_Puja_Pct"] = np.where(df["$Base"] > 0, ((df["$Final"] - df["$Base"]) / df["$Base"]) * 100, 0)
+    
+    # Clasificación por propósito según rango de peso
+    df["Rango_Peso"] = pd.cut(
+        df["P.Prom"], 
+        bins=[0, 200, 350, 1000], 
+        labels=["Levante (<200 Kg)", "Desarrollo (200-350 Kg)", "Ceba (>350 Kg)"]
+    )
 
     df = df.dropna(subset=["Fecha_TS", "$Final", "P.Prom"])
     return df
@@ -408,7 +419,8 @@ procedencias_sel = st.sidebar.multiselect(
 )
 
 st.sidebar.markdown("---")
-# Botón de exportación CSV
+
+# Exportación de datos filtrados
 csv_export = df_total.to_csv(index=False).encode('utf-8')
 st.sidebar.download_button(
     label="📥 Descargar Dataset Filtrado (CSV)",
@@ -476,45 +488,185 @@ selected_tab = option_menu(
 )
 
 # ---------------------------------------------------------
-# TAB 1: RESUMEN
+# TAB 1: RESUMEN (PORTADA EJECUTIVA DE IMPACTO)
 # ---------------------------------------------------------
 if selected_tab == "Resumen":
-    c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Lotes vendidos", f"{len(df):,}")
-    c2.metric("Animales totales", f"{int(df['Cant.'].sum()):,}")
-    c3.metric("Precio Prom. ($/Kg)", f"${df['$Final'].mean():,.0f}")
-    c4.metric("Peso Prom. (Kg)", f"{df['P.Prom'].mean():,.1f}")
+    # Cálculos para Métricas Principales
+    monto_total_comercializado = df["Monto_Lote"].sum()
+    toneladas_totales = df["Peso_Total"].sum() / 1000
+    precio_prom = df["$Final"].mean()
+    prima_prom_pct = df["Prima_Puja_Pct"].mean()
     tasa_puja = df["Hubo_Puja"].mean() * 100
-    c5.metric("Lotes con Puja", f"{tasa_puja:,.1f}%")
 
-    st.markdown("### Evolución del precio final por Kg")
-    serie_diaria = df.groupby("Fecha_TS")["$Final"].mean().reset_index()
-    fig = px.line(serie_diaria, x="Fecha_TS", y="$Final", markers=True)
-    fig.update_layout(xaxis_title="Fecha", yaxis_title="Precio Final Promedio ($/Kg)")
-    fig = aplicar_estilo_grafico(fig)
-    st.plotly_chart(fig, use_container_width=True)
+    # 1. KPIs FINANCIEROS Y OPERATIVOS
+    kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
+    
+    kpi1.metric(
+        "Monto Movilizado", 
+        f"${monto_total_comercializado / 1e6:,.1f} M",
+        help="Valor comercial total adjudicado en subasta (Millones COP)"
+    )
+    kpi2.metric(
+        "Tonelaje Comercializado", 
+        f"{toneladas_totales:,.1f} Ton",
+        help="Toneladas de peso vivo vendidas"
+    )
+    kpi3.metric(
+        "Precio Promedio", 
+        f"${precio_prom:,.0f} /Kg",
+        help="Precio promedio final por kilogramo"
+    )
+    kpi4.metric(
+        "Prima de Subasta", 
+        f"+{prima_prom_pct:.1f}%",
+        help="Valorización media lograda sobre el precio de salida base"
+    )
+    kpi5.metric(
+        "Efectividad de Puja", 
+        f"{tasa_puja:,.1f}%",
+        help="Porcentaje de lotes que recibieron ofertas efectivas"
+    )
 
-    col_a, col_b = st.columns(2)
+    st.markdown("---")
+
+    # 2. ASPECTOS CLAVE DEL PERIODO (HIGHLIGHTS)
+    top_cat_vol = df["Sexo"].mode()[0] if not df.empty else "N/A"
+    top_proc_vol = df["Procedencia"].mode()[0] if not df.empty else "N/A"
+    precio_max = df["$Final"].max()
+    lote_max_precio = df.loc[df["$Final"].idxmax()] if not df.empty else None
+
+    st.markdown("### 🌟 Aspectos Clave del Mercado")
+    
+    col_h1, col_h2, col_h3, col_h4 = st.columns(4)
+    
+    with col_h1:
+        st.markdown(f"""
+        <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid #003399; border-radius: 8px; padding: 12px 16px;">
+            <p style="margin: 0; font-size: 0.75rem; color: #64748B; font-weight: 700; text-transform: uppercase;">Categoría Predominante</p>
+            <h4 style="margin: 4px 0 0 0; color: #003399; font-size: 1.1rem;">{etiqueta_sexo(top_cat_vol)}</h4>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_h2:
+        st.markdown(f"""
+        <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid #008037; border-radius: 8px; padding: 12px 16px;">
+            <p style="margin: 0; font-size: 0.75rem; color: #64748B; font-weight: 700; text-transform: uppercase;">Principal Procedencia</p>
+            <h4 style="margin: 4px 0 0 0; color: #008037; font-size: 1.1rem;">{top_proc_vol}</h4>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_h3:
+        st.markdown(f"""
+        <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid #D97706; border-radius: 8px; padding: 12px 16px;">
+            <p style="margin: 0; font-size: 0.75rem; color: #64748B; font-weight: 700; text-transform: uppercase;">Récord de Precio $/Kg</p>
+            <h4 style="margin: 4px 0 0 0; color: #D97706; font-size: 1.1rem;">${precio_max:,.0f} /Kg</h4>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_h4:
+        st.markdown(f"""
+        <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid #2563EB; border-radius: 8px; padding: 12px 16px;">
+            <p style="margin: 0; font-size: 0.75rem; color: #64748B; font-weight: 700; text-transform: uppercase;">Volumen Movilizado</p>
+            <h4 style="margin: 4px 0 0 0; color: #2563EB; font-size: 1.1rem;">{len(df):,} Lotes ({int(df['Cant.'].sum()):,} Cabezas)</h4>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # 3. GRÁFICO COMBINADO: TENDENCIA DIARIA DE PRECIO Y CABEZAS
+    st.markdown("### 📈 Tendencia del Mercado: Precio Promedio vs. Cabezas Subastadas")
+    
+    df_diario = df.groupby("Fecha_TS").agg(
+        Precio_Prom=("$Final", "mean"),
+        Cabezas_Totales=("Cant.", "sum")
+    ).reset_index()
+
+    fig_comb = go.Figure()
+
+    # Barras: Volumen
+    fig_comb.add_trace(go.Bar(
+        x=df_diario["Fecha_TS"],
+        y=df_diario["Cabezas_Totales"],
+        name="Cabezas Subastadas",
+        marker_color="#93C5FD",
+        opacity=0.6,
+        yaxis="y2"
+    ))
+
+    # Línea: Precio
+    fig_comb.add_trace(go.Scatter(
+        x=df_diario["Fecha_TS"],
+        y=df_diario["Precio_Prom"],
+        name="Precio Promedio ($/Kg)",
+        mode="lines+markers",
+        line=dict(color="#003399", width=3),
+        marker=dict(size=6, color="#008037")
+    ))
+
+    fig_comb.update_layout(
+        xaxis=dict(title="Fecha de Subasta"),
+        yaxis=dict(title="Precio Promedio ($/Kg)", side="left"),
+        yaxis2=dict(title="Cabezas de Ganado", overlaying="y", side="right", showgrid=False),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
+    
+    st.plotly_chart(aplicar_estilo_grafico(fig_comb), use_container_width=True)
+
+    # 4. TRÍO DE DESGLOSES COMERCIALES
+    col_a, col_b, col_c = st.columns(3)
+
     with col_a:
-        st.markdown("### Volumen por Categoría (Sexo)")
-        vol_sexo = df["Sexo"].value_counts().reset_index()
-        vol_sexo.columns = ["Sexo", "Lotes"]
-        vol_sexo["Etiqueta"] = vol_sexo["Sexo"].map(etiqueta_sexo)
-        fig2 = px.bar(vol_sexo, x="Lotes", y="Etiqueta", orientation="h")
-        fig2.update_layout(yaxis_title="")
-        fig2 = aplicar_estilo_grafico(fig2)
-        st.plotly_chart(fig2, use_container_width=True)
+        st.markdown("#### 🥩 Distribución por Propósito (Rango Peso)")
+        df_rango = df["Rango_Peso"].value_counts().reset_index()
+        df_rango.columns = ["Propósito", "Lotes"]
+        fig_donut = px.pie(
+            df_rango, 
+            names="Propósito", 
+            values="Lotes", 
+            hole=0.4,
+            color_discrete_sequence=["#003399", "#008037", "#D97706"]
+        )
+        fig_donut = aplicar_estilo_grafico(fig_donut)
+        st.plotly_chart(fig_donut, use_container_width=True)
+
     with col_b:
-        st.markdown("### Top 10 Procedencias por volumen")
-        vol_proc = df["Procedencia"].value_counts().head(10).reset_index()
-        vol_proc.columns = ["Procedencia", "Lotes"]
-        fig3 = px.bar(vol_proc, x="Lotes", y="Procedencia", orientation="h")
-        fig3.update_layout(yaxis_title="")
-        fig3 = aplicar_estilo_grafico(fig3)
-        st.plotly_chart(fig3, use_container_width=True)
+        st.markdown("#### 💰 Ingresos por Categoría ($ COP)")
+        ingreso_sexo = df.groupby("Sexo")["Monto_Lote"].sum().reset_index()
+        ingreso_sexo["Etiqueta"] = ingreso_sexo["Sexo"].map(etiqueta_sexo)
+        ingreso_sexo = ingreso_sexo.sort_values("Monto_Lote", ascending=True).tail(6)
+
+        fig_ing_sexo = px.bar(
+            ingreso_sexo, 
+            x="Monto_Lote", 
+            y="Etiqueta", 
+            orientation="h",
+            text_auto=".2s",
+            labels={"Monto_Lote": "COP", "Etiqueta": ""}
+        )
+        fig_ing_sexo = aplicar_estilo_grafico(fig_ing_sexo)
+        st.plotly_chart(fig_ing_sexo, use_container_width=True)
+
+    with col_c:
+        st.markdown("#### 🏆 Top Procedencias por Monto ($ COP)")
+        ingreso_proc = df.groupby("Procedencia")["Monto_Lote"].sum().reset_index().sort_values("Monto_Lote", ascending=False).head(6)
+        ingreso_proc = ingreso_proc.sort_values("Monto_Lote", ascending=True)
+
+        fig_ing_proc = px.bar(
+            ingreso_proc, 
+            x="Monto_Lote", 
+            y="Procedencia", 
+            orientation="h",
+            text_auto=".2s",
+            color="Monto_Lote",
+            color_continuous_scale=["#93C5FD", "#003399"],
+            labels={"Monto_Lote": "COP", "Procedencia": ""}
+        )
+        fig_ing_proc.update_layout(coloraxis_showscale=False)
+        fig_ing_proc = aplicar_estilo_grafico(fig_ing_proc)
+        st.plotly_chart(fig_ing_proc, use_container_width=True)
 
 # ---------------------------------------------------------
-# TAB 2: EXPLORACIÓN (VISUALIZACIÓN EXPLORATORIA COMPLETA)
+# TAB 2: EXPLORACIÓN (VISUALIZACIÓN COMPLETA DE GRÁFICOS)
 # ---------------------------------------------------------
 elif selected_tab == "Exploración":
     st.markdown("### 📈 Visualización Exploratoria Comercial y Operativa")
@@ -779,7 +931,7 @@ elif selected_tab == "Predictor":
         min_val = min(df_eval["Real"].min(), df_eval["Random Forest"].min())
         max_val = max(df_eval["Real"].max(), df_eval["Random Forest"].max())
 
-        # Línea de referencia y = x (Predicción perfecta)
+        # Línea de referencia y = x
         fig_real_pred.add_trace(go.Scatter(
             x=[min_val, max_val], y=[min_val, max_val],
             mode='lines', name='Predicción Perfecta (y=x)',
